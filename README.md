@@ -1,0 +1,2 @@
+# IoTSensorModule-WebAPI
+IoTセンサモジュールにWebからアクセスできるAPI
