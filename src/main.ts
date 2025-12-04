@@ -3,3 +3,7 @@ export class IoTSensorModuleAPI {
 		console.log('Hello from IoTSensorModuleAPI!');
 	}
 }
+
+declare global {
+	const IoTSensorModuleAPI: IoTSensorModuleAPI;
+}

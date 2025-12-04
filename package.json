@@ -1,4 +1,10 @@
 {
+  "name": "iot-sensor-module-api",
+  "version": "1.0.0",
+  "description": "A Library to operate IoT Sensor Module from Web Applications",
+  "main": "dist/iot_sensor_module_api_umd.js",
+  "module": "dist/iot_sensor_module_api.mjs",
+  "types": "dist/iot_sensor_module_api.iife.d.ts",
   "scripts": {
     "dev": "vite",
     "build": "vite build"
@@ -6,6 +12,7 @@
   "devDependencies": {
     "@types/node": "^24.10.1",
     "typescript": "^5.9.3",
-    "vite": "^7.2.6"
+    "vite": "^7.2.6",
+    "vite-plugin-dts": "^4.5.4"
   }
 }
