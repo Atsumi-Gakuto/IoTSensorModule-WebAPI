@@ -4,10 +4,24 @@
 		<meta charset="utf-8">
 		<title>IoTセンサモジュールフレームワーク WebAPI テスト</title>
 		<script type="module" defer src="./js/iot_sensor_module_api_sample.js"></script>
+		<link rel="stylesheet" href="./css/iot_sensor_module_api_sample.css">
 	</head>
 	<body>
 		<h1>IoTセンサモジュールフレームワーク WebAPI テスト</h1>
+
+		<h3>対応チェック</h3>
 		<p>Web Bluetoothに対応しているか？ : <span id="message_is_web_bluetooth_supported">確認中</span></p>
-		<button id="button_start_advertise_observe">アドバタイズ監視</button>
+
+		<h3>トリガーデータ</h3>
+		<p>受信時刻 : <span id="message_last_trigger_timestamp">未受信</span></p>
+		<table id="table_trigger_data">
+			<tr id="row_trigger_data_index">
+			</tr>
+			<tr id="row_trigger_data_flags">
+			</tr>
+		</table>
+
+		<h3>コントロール</h3>
+		<button id="button_start_advertise_observe">トリガーデータ監視</button>
 	</body>
 </html>
