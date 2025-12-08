@@ -1,4 +1,5 @@
 import { NotSupportedError } from "./errors/not_supported_error";
+import { TriggerOverflowError } from "./errors/trigger_overflow_error";
 
 /**
  * Web Bluetoothを用いてIoTセンサモジュールを操作できるようになるWebAPI
@@ -48,6 +49,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 		if(device.watchAdvertisements != undefined) {
 			device.addEventListener('advertisementreceived', (event: BluetoothAdvertisingEvent) => {
 				const triggerArray: Uint8Array = new Uint8Array(event.manufacturerData.get(this.COMPANY_ID)!.buffer);
+				if(triggerArray.length >= 8 || (triggerArray.length == 7 && triggerArray[6] > 0b00011111)) throw new TriggerOverflowError('Too big trigger data received.');
 				let triggerValue: number = 0;
 				triggerArray.forEach((value: number, index: number) => triggerValue += value << ((triggerArray.length - index - 1) * 8));
 				const customEvent: CustomEvent = new CustomEvent('trigger-data-received', { detail: {triggerValue: triggerValue} });
