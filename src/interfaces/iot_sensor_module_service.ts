@@ -10,12 +10,7 @@ export interface IoTSensorModuleService {
 	uuid: string;
 
 	/**
-	 * キャラクタリスティックの値のデータ表現形式。Data Service及びLog Serviceのみで使用する。
+	 * サービス内に含まれるキャラクタリスティックの情報
 	 */
-	dataType?: IoTSensorModuleCharacteristicDataType;
-
-	/**
-	 * Log Serviceのキャラクタリスティックの値に含まれるログの最大件数。Log Serviceのみで使用する。
-	 */
-	logCount?: number;
+	characteristics: { [key: string]: IoTSensorModuleCharacteristicDataType };
 }
