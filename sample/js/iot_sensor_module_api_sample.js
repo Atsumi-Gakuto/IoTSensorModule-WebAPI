@@ -28,7 +28,6 @@ async function init() {
 	connectionInfoElement.innerText = '取得OK';
 	connectionInfoElement.classList.add('message_ok');
 
-
 	// IoTセンサモジュールAPIの初期化
 	let api;
 	try {
@@ -45,7 +44,6 @@ async function init() {
 	apiInstanceElement.innerText = '生成OK';
 	apiInstanceElement.classList.add('message_ok');
 
-
 	// Web Bluetooth対応チェック
 	const isWebBluetoothSupported = api.getIsSupportedWebBluetooth();
 	if(isWebBluetoothSupported) {
@@ -61,7 +59,6 @@ async function init() {
 		supportIndicatorElement.classList.add('message_ng');
 	}
 
-
 	// トリガーデータ可視化の表
 	for(let i = 0; i < api.getNumberOfTriggerData(); i++) {
 		const indexElement = document.createElement('td');
@@ -72,13 +69,20 @@ async function init() {
 		document.getElementById('row_trigger_data_flags').append(flagElement);
 	}
 
-
 	if(isWebBluetoothSupported) {
 		// トリガーデータ監視ボタン
 		const startObserveButton = document.getElementById('button_start_advertise_observe');
 		startObserveButton.addEventListener('click', async () => api.observeTrigger());
 		startObserveButton.disabled = false;
 
+		// 接続ボタン
+		const connectButton = document.getElementById('button_connect');
+		connectButton.addEventListener('click', async () => api.connect());
+		connectButton.disabled = false;
+
+		// 切断ボタン
+		const disconnectButton = document.getElementById('button_disconnect');
+		//disconnectButton.addEventListener('click', async () => api.disconnect());
 
 		// イベント登録
 		api.addEventListener('trigger-data-received', () => {
@@ -86,6 +90,16 @@ async function init() {
 			for(let i = 0; i < api.getNumberOfTriggerData(); i++) {
 				document.getElementById('row_trigger_data_flags').children[i].innerText = api.isTriggered(i) ? '✅' : '❌';
 			}
+		});
+		api.addEventListener('connection-established', () => {
+			startObserveButton.disabled = true;
+			connectButton.disabled = true;
+			disconnectButton.disabled = false;
+		});
+		api.addEventListener('connection-closed', () => {
+			startObserveButton.disabled = false;
+			connectButton.disabled = false;
+			disconnectButton.disabled = true;
 		});
 	}
 }

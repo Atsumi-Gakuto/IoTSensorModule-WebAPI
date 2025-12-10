@@ -5,6 +5,7 @@ import { IOT_SENSOR_MODULE_CHARACTERISTIC_DATA_TYPE } from "./types/iot_sensor_m
 import { InvalidInputError } from "./errors/invalid_input_error";
 import { NotSupportedError } from "./errors/not_supported_error";
 import { TriggerOverflowError } from "./errors/trigger_overflow_error";
+import { InvalidStateError } from "./errors/invalid_state_error";
 
 /**
  * Web Bluetoothを用いてIoTセンサモジュールを操作できるようになるWebAPI
@@ -165,15 +166,18 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 */
 	private async getDevice(): Promise<BluetoothDevice|null> {
 		if(!(await this.getIsSupportedWebBluetooth())) throw new NotSupportedError('Web Bluetooth is not supported or not available in this browser.');
+		const serviceUUIDs: string[] = [];
+		for(const service in this.connectionConfig.services) serviceUUIDs.push(this.connectionConfig.services[service].uuid);
 		let device: BluetoothDevice | null = null;
 		try {
 			device = await navigator.bluetooth.requestDevice({
-			filters: [
+				filters: [
 					{ name: this.connectionConfig.deviceName },
 					{ manufacturerData: [{ companyIdentifier: this.connectionConfig.companyId }] }
-			],
-				optionalManufacturerData: [ this.connectionConfig.companyId ]
-		});
+				],
+				optionalManufacturerData: [ this.connectionConfig.companyId ],
+				optionalServices: serviceUUIDs
+			});
 		}
 		catch(error: any) {
 			if(error.name == 'NotFoundError') console.warn('No device selected. It may be caused by user cancelling the device selection.');
@@ -191,22 +195,44 @@ export class IoTSensorModuleAPI extends EventTarget {
 	public async observeTrigger(): Promise<void> {
 		const device: BluetoothDevice | null = await this.getDevice();
 		if(device == null) throw new InvalidInputError('No Bluetooth device selected.');
+
 		if(device.watchAdvertisements != undefined) {
 			device.addEventListener('advertisementreceived', (event: BluetoothAdvertisingEvent) => {
 				const triggerArray: Uint8Array = new Uint8Array(event.manufacturerData.get(this.connectionConfig.companyId)!.buffer);
 				if(triggerArray.length >= 8 || (triggerArray.length == 7 && triggerArray[6] > 0b00011111)) throw new TriggerOverflowError('Too big trigger data received.');
 				let triggerValue: number = 0;
-				triggerArray.forEach((value: number, index: number) => triggerValue += value << ((triggerArray.length - index - 1) * 8));
-				const customEvent: CustomEvent = new CustomEvent('trigger-data-received', { detail: {triggerValue: triggerValue} });
+				triggerArray.forEach((value: number, index: number) => triggerValue += value << ((triggerArray.length - index - 1) * 8));;
 				this.lastTriggerValue = triggerValue;
 				this.lastTriggerTimestamp = Date.now();
-				this.dispatchEvent(customEvent);
+				this.dispatchEvent(new CustomEvent('trigger-data-received', { detail: {triggerValue: triggerValue} }));
 			});
 			await device.watchAdvertisements();
+			console.info('Trigger data observation started.');
 		}
 		else {
 			throw new NotSupportedError('Watching advertisements is not supported in this browser.');
 		}
+	}
+
+	/**
+	 * IoTセンサモジュールと接続し、詳細なセンサの取得やモジュールの設定を操作を行える状態にする。
+	 * @throws InvalidInputError 適切なBluetoothデバイス（IoTセンサモジュール）が選択されていない場合に投げられる。
+	 * @throws NotSupportedError Web Bluetoothが対応していない場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 */
+	public async connect(): Promise<void> {
+		const device: BluetoothDevice | null = await this.getDevice();
+		if(device == null) throw new InvalidInputError('No Bluetooth device selected.');
+
+		device.addEventListener('gattserverdisconnected', () => {
+			this.dispatchEvent(new CustomEvent('connection-closed'));
+		});
+
+		if(device.gatt == undefined) throw new InvalidStateError('GATT server not found on the selected device.');
+		await device.gatt!.connect();
+		console.info('Connection established.');
+
+		this.dispatchEvent(new CustomEvent('connection-established'));
 	}
 }
 
