@@ -30,7 +30,20 @@ async function init() {
 
 
 	// IoTセンサモジュールAPIの初期化
-	const api = new IoTSensorModuleAPI(connectionConfig);
+	let api;
+	try {
+		api = new IoTSensorModuleAPI(connectionConfig);
+	}
+	catch(error) {
+		console.error(`Failed to create API instance. Reason: ${error}`);
+		const apiInstanceElement = document.getElementById('message_api_instance');
+		apiInstanceElement.innerText = '入力情報に誤りあり';
+		apiInstanceElement.classList.add('message_ng');
+		return;
+	}
+	const apiInstanceElement = document.getElementById('message_api_instance');
+	apiInstanceElement.innerText = '生成OK';
+	apiInstanceElement.classList.add('message_ok');
 
 
 	// Web Bluetooth対応チェック
