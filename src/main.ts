@@ -27,6 +27,11 @@ export class IoTSensorModuleAPI extends EventTarget {
 	private lastTriggerTimestamp: number | null = null;
 
 	/**
+	 * 接続確立中のBLEデバイスのオブジェクト。切断時は`null`にする。
+	 */
+	private connectedDevice: BluetoothDevice | null = null;
+
+	/**
 	 * コンストラクタ
 	 * @param connectionConfig 接続相手となるIoTセンサモジュールの接続情報
 	 * @throws InvalidInputError `connectionConfig`の内容に誤りがある場合に投げられる。
@@ -219,8 +224,11 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @throws InvalidInputError 適切なBluetoothデバイス（IoTセンサモジュール）が選択されていない場合に投げられる。
 	 * @throws NotSupportedError Web Bluetoothが対応していない場合に投げられる。
 	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws InvalidStateError すでに接続が確立されている場合や接続を試みるデバイスにGATTサーバーがない場合に投げられる。
 	 */
 	public async connect(): Promise<void> {
+		if(this.connectedDevice != null) throw new InvalidStateError('A device is already established a connection.');
+
 		const device: BluetoothDevice | null = await this.getDevice();
 		if(device == null) throw new InvalidInputError('No Bluetooth device selected.');
 
@@ -230,9 +238,22 @@ export class IoTSensorModuleAPI extends EventTarget {
 
 		if(device.gatt == undefined) throw new InvalidStateError('GATT server not found on the selected device.');
 		await device.gatt!.connect();
+		this.connectedDevice = device;
 		console.info('Connection established.');
 
 		this.dispatchEvent(new CustomEvent('connection-established'));
+	}
+
+	/**
+	 * IoTセンサモジュールから切断する。
+	 * @throws InvalidStateError まだデバイスと接続されていない場合に投げられる。
+	 */
+	public disconnect(): void {
+		if(this.connectedDevice == null) throw new InvalidStateError('No device is connected.');
+
+		this.connectedDevice.gatt!.disconnect();
+		this.connectedDevice = null;
+		console.info('Connection closed.');
 	}
 }
 

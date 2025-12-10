@@ -82,7 +82,7 @@ async function init() {
 
 		// 切断ボタン
 		const disconnectButton = document.getElementById('button_disconnect');
-		//disconnectButton.addEventListener('click', async () => api.disconnect());
+		disconnectButton.addEventListener('click', async () => api.disconnect());
 
 		// イベント登録
 		api.addEventListener('trigger-data-received', () => {
