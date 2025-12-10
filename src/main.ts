@@ -1,3 +1,4 @@
+import { IoTSensorModuleConnectionConfig } from "./interfaces/iot_sensor_module_connection_config";
 import { InvalidInputError } from "./errors/invalid_input_error";
 import { NotSupportedError } from "./errors/not_supported_error";
 import { TriggerOverflowError } from "./errors/trigger_overflow_error";
@@ -7,19 +8,9 @@ import { TriggerOverflowError } from "./errors/trigger_overflow_error";
  */
 export class IoTSensorModuleAPI extends EventTarget {
 	/**
-	 * IoTセンサモジュールデバイスのBLE上の表示名
+	 * 接続相手のIoTセンサモジュールの接続情報
 	 */
-	private readonly DEVICE_NAME: string = 'IoTSM';
-
-	/**
-	 * IoTセンサモジュールデバイスのManufacturer Specific DataのCompany ID
-	 */
-	private readonly COMPANY_ID: number = 0xFFFF;
-
-	/**
-	 * トリガーデータの数
-	 */
-	private readonly NUMBER_OF_TRIGGER_DATA: number = 16;
+	private readonly connectionConfig: IoTSensorModuleConnectionConfig;
 
 	/**
 	 * 最後に受信したトリガーデータの値
@@ -33,12 +24,22 @@ export class IoTSensorModuleAPI extends EventTarget {
 
 	/**
 	 * コンストラクタ
+	 * @param connectionConfig 接続相手となるIoTセンサモジュールの接続情報
+	 * @throws InvalidInputError `connectionConfig`の内容に誤りがある場合に投げられる。
 	 */
-	constructor() {
+	constructor(connectionConfig: IoTSensorModuleConnectionConfig) {
 		super();
+		this.connectionConfig = connectionConfig;
 
-		if(this.COMPANY_ID < 0x0000 || this.COMPANY_ID > 0xFFFF) throw new InvalidInputError('The Company ID is out of valid range (0x0000-0xFFFF).');
-		else if(this.NUMBER_OF_TRIGGER_DATA > 53) throw new InvalidInputError('The number of trigger data exceeds the allowable limit of 53.');
+		// 設定項目の整合性チェック
+		if(typeof this.connectionConfig.deviceName != 'string') throw new InvalidInputError('The field "deviceName" must be provided as a string.');
+		else if(typeof this.connectionConfig.companyId != 'number') throw new InvalidInputError('The field "companyId" must be provided as a number.');
+		else if(this.connectionConfig.companyId < 0x0000 || this.connectionConfig.companyId > 0xFFFF) throw new InvalidInputError('The field "companyId" is out of valid range (0x0000-0xFFFF).');
+		else if(typeof this.connectionConfig.numberOfTriggerData != 'number') throw new InvalidInputError('The field "numberOfTriggerData" must be provided as a number.');
+		else if(this.connectionConfig.numberOfTriggerData < 1 || this.connectionConfig.numberOfTriggerData > 53) throw new InvalidInputError('The field "numberOfTriggerData" is out of valid range (1-53).');
+		else if(typeof this.connectionConfig.services != 'object') throw new InvalidInputError('The field "services" must be provided as a dictionary object.');
+
+		//TODO: サービス内のデータ整合性チェック & キャラクタリスティック内のデータ整合性チェック
 	}
 
 	/**
@@ -55,7 +56,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @returns トリガーデータの数
 	 */
 	public getNumberOfTriggerData(): number {
-		return this.NUMBER_OF_TRIGGER_DATA;
+		return this.connectionConfig.numberOfTriggerData;
 	}
 
 	/**
@@ -81,7 +82,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @returns 指定したインデックスが立っているかどうか。
 	 */
 	public isTriggered(index: number): boolean {
-		if(index < 0 || index >= this.NUMBER_OF_TRIGGER_DATA) throw new InvalidInputError(`The specified index is out of valid range (0-${this.NUMBER_OF_TRIGGER_DATA - 1}).`);
+		if(index < 0 || index >= this.connectionConfig.numberOfTriggerData) throw new InvalidInputError(`The specified index is out of valid range (0-${this.connectionConfig.numberOfTriggerData - 1}).`);
 		if(this.lastTriggerValue != null) {
 			return ((this.lastTriggerValue >> index) & 0b1) == 1;
 		}
@@ -102,10 +103,10 @@ export class IoTSensorModuleAPI extends EventTarget {
 		try {
 			device = await navigator.bluetooth.requestDevice({
 			filters: [
-				{ name: this.DEVICE_NAME },
-				{ manufacturerData: [{ companyIdentifier: this.COMPANY_ID }] }
+					{ name: this.connectionConfig.deviceName },
+					{ manufacturerData: [{ companyIdentifier: this.connectionConfig.companyId }] }
 			],
-			optionalManufacturerData: [ this.COMPANY_ID ]
+				optionalManufacturerData: [ this.connectionConfig.companyId ]
 		});
 		}
 		catch(error: any) {
@@ -126,7 +127,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 		if(device == null) throw new InvalidInputError('No Bluetooth device selected.');
 		if(device.watchAdvertisements != undefined) {
 			device.addEventListener('advertisementreceived', (event: BluetoothAdvertisingEvent) => {
-				const triggerArray: Uint8Array = new Uint8Array(event.manufacturerData.get(this.COMPANY_ID)!.buffer);
+				const triggerArray: Uint8Array = new Uint8Array(event.manufacturerData.get(this.connectionConfig.companyId)!.buffer);
 				if(triggerArray.length >= 8 || (triggerArray.length == 7 && triggerArray[6] > 0b00011111)) throw new TriggerOverflowError('Too big trigger data received.');
 				let triggerValue: number = 0;
 				triggerArray.forEach((value: number, index: number) => triggerValue += value << ((triggerArray.length - index - 1) * 8));

@@ -10,6 +10,7 @@
 		<h1>IoTセンサモジュールフレームワーク WebAPI テスト</h1>
 
 		<h3>対応チェック</h3>
+		<p>接続情報取得状況 : <span id="message_connection_info">取得中</span></p>
 		<p>Web Bluetoothに対応しているか？ : <span id="message_is_web_bluetooth_supported">確認中</span></p>
 
 		<h3>トリガーデータ</h3>
@@ -21,7 +22,9 @@
 			</tr>
 		</table>
 
+		<h3>センサー情報</h3>
+
 		<h3>コントロール</h3>
-		<button id="button_start_advertise_observe">トリガーデータ監視</button>
+		<button id="button_start_advertise_observe" disabled>トリガーデータ監視</button>
 	</body>
 </html>
