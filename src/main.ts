@@ -91,20 +91,39 @@ export class IoTSensorModuleAPI extends EventTarget {
 	}
 
 	/**
-	 * アドバタイズデータを購読し、IoTセンサモジュールからのトリガーデータを受信できるようにする。
-	 * @throws NotSupportedError Web Bluetoothが対応していない、またはアドバタイズの購読がサポートされていない場合に投げられる。
+	 * ブラウザにBluetoothデバイス選択のダイアログを表示させ、ユーザーが選択したBluetoothデバイス（IoTセンサモジュール）のオブジェクトを返す。
+	 * @throws NotSupportedError Web Bluetoothが対応していない場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @returns ユーザーが選択したBluetoothデバイス（IoTセンサモジュール）のオブジェクト。キャンセルボタンを押すなどして選択されずに終わった場合は`null`を返す。
 	 */
-	public async observeTrigger(): Promise<void> {
+	private async getDevice(): Promise<BluetoothDevice|null> {
 		if(!(await this.getIsSupportedWebBluetooth())) throw new NotSupportedError('Web Bluetooth is not supported or not available in this browser.');
-
-		const device: BluetoothDevice = await navigator.bluetooth.requestDevice({
+		let device: BluetoothDevice | null = null;
+		try {
+			device = await navigator.bluetooth.requestDevice({
 			filters: [
 				{ name: this.DEVICE_NAME },
 				{ manufacturerData: [{ companyIdentifier: this.COMPANY_ID }] }
 			],
 			optionalManufacturerData: [ this.COMPANY_ID ]
 		});
+		}
+		catch(error: any) {
+			if(error.name == 'NotFoundError') console.warn('No device selected. It may be caused by user cancelling the device selection.');
+			else throw error;
+		}
+		return device;
+	}
 
+	/**
+	 * アドバタイズデータを購読し、IoTセンサモジュールからのトリガーデータを受信できるようにする。
+	 * @throws InvalidInputError 適切なBluetoothデバイス（IoTセンサモジュール）が選択されていない場合に投げられる。
+	 * @throws NotSupportedError Web Bluetoothが対応していない場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 */
+	public async observeTrigger(): Promise<void> {
+		const device: BluetoothDevice | null = await this.getDevice();
+		if(device == null) throw new InvalidInputError('No Bluetooth device selected.');
 		if(device.watchAdvertisements != undefined) {
 			device.addEventListener('advertisementreceived', (event: BluetoothAdvertisingEvent) => {
 				const triggerArray: Uint8Array = new Uint8Array(event.manufacturerData.get(this.COMPANY_ID)!.buffer);
