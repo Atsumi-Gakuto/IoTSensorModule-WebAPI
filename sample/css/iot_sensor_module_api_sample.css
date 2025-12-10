@@ -1,15 +1,14 @@
-/* トリガーデータの表（一部は全てのテーブルタグに適用） */
-#table_trigger_data {
+/* テーブル */
+table {
 	border: 2px solid silver;
 	border-collapse: collapse;
 }
 
-td {
+th, td {
 	border: 1px solid silver;
 	padding: 4px 8px;
 	text-align: center;
 }
-
 
 /* メッセージ装飾 */
 .message_ok {
