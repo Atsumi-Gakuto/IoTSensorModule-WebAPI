@@ -69,6 +69,29 @@ async function init() {
 		document.getElementById('row_trigger_data_flags').append(flagElement);
 	}
 
+	// センサーデータ取得コントロールの表
+	for(const sensorDataName in connectionConfig.services.dataService.characteristics) {
+		const tableRowElement = document.createElement('tr');
+		const sensorDataNameElement = document.createElement('td');
+		sensorDataNameElement.innerText = sensorDataName;
+		tableRowElement.append(sensorDataNameElement);
+		const getDataButtonCellElement = document.createElement('td');
+		const getDataButtonElement = document.createElement('button');
+		getDataButtonElement.innerText = '取得';
+		getDataButtonElement.classList.add('connection_only_control')
+		getDataButtonElement.disabled = true
+		getDataButtonCellElement.append(getDataButtonElement);
+		tableRowElement.append(getDataButtonCellElement);
+		const subscribeButtonCellElement = document.createElement('td');
+		const subscribeButtonElement = document.createElement('input');
+		subscribeButtonElement.type = 'checkbox';
+		subscribeButtonElement.classList.add('connection_only_control')
+		subscribeButtonElement.disabled = true
+		subscribeButtonCellElement.append(subscribeButtonElement);
+		tableRowElement.append(subscribeButtonCellElement);
+		document.getElementById('table_sensor_data_control').append(tableRowElement);
+	}
+
 	if(isWebBluetoothSupported) {
 		// トリガーデータ監視ボタン
 		const startObserveButton = document.getElementById('button_start_advertise_observe');
@@ -95,11 +118,13 @@ async function init() {
 			startObserveButton.disabled = true;
 			connectButton.disabled = true;
 			disconnectButton.disabled = false;
+			document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
 		});
 		api.addEventListener('connection-closed', () => {
 			startObserveButton.disabled = false;
 			connectButton.disabled = false;
 			disconnectButton.disabled = true;
+			document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
 		});
 	}
 }
