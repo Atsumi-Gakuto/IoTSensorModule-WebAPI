@@ -1,4 +1,7 @@
 import { IoTSensorModuleConnectionConfig } from "./interfaces/iot_sensor_module_connection_config";
+import { IoTSensorModuleService } from "./interfaces/iot_sensor_module_service";
+import { IoTSensorModuleCharacteristic } from "./interfaces/iot_sensor_module_characteristics";
+import { IOT_SENSOR_MODULE_CHARACTERISTIC_DATA_TYPE } from "./types/iot_sensor_module_characteristic_data_type";
 import { InvalidInputError } from "./errors/invalid_input_error";
 import { NotSupportedError } from "./errors/not_supported_error";
 import { TriggerOverflowError } from "./errors/trigger_overflow_error";
@@ -38,8 +41,71 @@ export class IoTSensorModuleAPI extends EventTarget {
 		else if(typeof this.connectionConfig.numberOfTriggerData != 'number') throw new InvalidInputError('The field "numberOfTriggerData" must be provided as a number.');
 		else if(this.connectionConfig.numberOfTriggerData < 1 || this.connectionConfig.numberOfTriggerData > 53) throw new InvalidInputError('The field "numberOfTriggerData" is out of valid range (1-53).');
 		else if(typeof this.connectionConfig.services != 'object') throw new InvalidInputError('The field "services" must be provided as a dictionary object.');
+		for(const serviceName in this.connectionConfig.services) {
+			const service: IoTSensorModuleService = this.connectionConfig.services[serviceName];
+			if(typeof service.uuid != 'string') throw new InvalidInputError(`The field "uuid" of service "${serviceName}" must be provided as a string.`);
+			else if(!this.checkUUIDFormat(service.uuid)) throw new InvalidInputError(`The field "uuid" of service "${serviceName}" is not in valid UUID format.`);
+			else if(typeof service.characteristics != 'object') throw new InvalidInputError(`The field "characteristics" of service "${serviceName}" must be provided as a dictionary object.`);
+			switch(serviceName) {
+				case 'systemService':
+					if(typeof service.characteristics.mode != 'object') throw new InvalidInputError(`The characteristic "mode" in service "${serviceName}" must be provided as a dictionary object.`);
+					else if(typeof service.characteristics.response != 'object') throw new InvalidInputError(`The characteristic "response" in service "${serviceName}" must be provided as a dictionary object.`);
+					break;
+				case 'sensorService':
+					if(typeof service.characteristics.interval != 'object') throw new InvalidInputError(`The characteristic "interval" in service "${serviceName}" must be provided as a dictionary object.`);
+					else if(typeof service.characteristics.response != 'object') throw new InvalidInputError(`The characteristic "response" in service "${serviceName}" must be provided as a dictionary object.`);
+					break;
+				case 'bleService':
+					if(typeof service.characteristics.mode != 'object') throw new InvalidInputError(`The characteristic "mode" in service "${serviceName}" must be provided as a dictionary object.`);
+					else if(typeof service.characteristics.advInterval != 'object') throw new InvalidInputError(`The characteristic "advInterval" in service "${serviceName}" must be provided as a dictionary object.`);
+					else if(typeof service.characteristics.channel != 'object') throw new InvalidInputError(`The characteristic "channel" in service "${serviceName}" must be provided as a dictionary object.`);
+					else if(typeof service.characteristics.txPower != 'object') throw new InvalidInputError(`The characteristic "txPower" in service "${serviceName}" must be provided as a dictionary object.`);
+					else if(typeof service.characteristics.uuid != 'object') throw new InvalidInputError(`The characteristic "uuid" in service "${serviceName}" must be provided as a dictionary object.`);
+					else if(typeof service.characteristics.major != 'object') throw new InvalidInputError(`The characteristic "major" in service "${serviceName}" must be provided as a dictionary object.`);
+					else if(typeof service.characteristics.measuredPower != 'object') throw new InvalidInputError(`The characteristic "measuredPower" in service "${serviceName}" must be provided as a dictionary object.`);
+					else if(typeof service.characteristics.response != 'object') throw new InvalidInputError(`The characteristic "response" in service "${serviceName}" must be provided as a dictionary object.`);
+					break;
+				case 'expressionService':
+					if(typeof service.characteristics.targetTask != 'object') throw new InvalidInputError(`The characteristic "targetTask" in service "${serviceName}" must be provided as a dictionary object.`);
+					else if(typeof service.characteristics.taskSlot != 'object') throw new InvalidInputError(`The characteristic "taskSlot" in service "${serviceName}" must be provided as a dictionary object.`);
+					else if(typeof service.characteristics.expression != 'object') throw new InvalidInputError(`The characteristic "expression" in service "${serviceName}" must be provided as a dictionary object.`);
+					else if(typeof service.characteristics.copy != 'object') throw new InvalidInputError(`The characteristic "copy" in service "${serviceName}" must be provided as a dictionary object.`);
+					else if(typeof service.characteristics.move != 'object') throw new InvalidInputError(`The characteristic "move" in service "${serviceName}" must be provided as a dictionary object.`);
+					else if(typeof service.characteristics.delete != 'object') throw new InvalidInputError(`The characteristic "delete" in service "${serviceName}" must be provided as a dictionary object.`);
+					else if(typeof service.characteristics.response != 'object') throw new InvalidInputError(`The characteristic "response" in service "${serviceName}" must be provided as a dictionary object.`);
+					break;
+				default:
+					break;
+			}
+			for(const characteristicName in service.characteristics) {
+				const characteristic: IoTSensorModuleCharacteristic = service.characteristics[characteristicName];
+				if(typeof characteristic.uuid != 'string') throw new InvalidInputError(`The field "uuid" of characteristic "${characteristicName}" in service "${serviceName}" must be provided as a string.`);
+				else if(!this.checkUUIDFormat(characteristic.uuid)) throw new InvalidInputError(`The field "uuid" of characteristic "${characteristicName}" in service "${serviceName}" is not in valid UUID format.`);
+				switch(serviceName) {
+					case 'dataService':
+						if(typeof characteristic.dataType != 'string') throw new InvalidInputError(`The field "dataType" of characteristic "${characteristicName}" in service "${serviceName}" must be provided as a IoTSensorModuleCharacteristicDataType.`);
+						else if(!IOT_SENSOR_MODULE_CHARACTERISTIC_DATA_TYPE.includes(characteristic.dataType)) throw new InvalidInputError(`The field "dataType" of characteristic "${characteristicName}" in service "${serviceName}" is not a valid IoTSensorModuleCharacteristicDataType.`);
+						break;
+					case 'logService':
+						if(typeof characteristic.dataType != 'string') throw new InvalidInputError(`The field "dataType" of characteristic "${characteristicName}" in service "${serviceName}" must be provided as a IoTSensorModuleCharacteristicDataType.`);
+						else if(!IOT_SENSOR_MODULE_CHARACTERISTIC_DATA_TYPE.includes(characteristic.dataType)) throw new InvalidInputError(`The field "dataType" of characteristic "${characteristicName}" in service "${serviceName}" is not a valid IoTSensorModuleCharacteristicDataType.`);
+						else if(typeof characteristic.logCount != 'number') throw new InvalidInputError(`The field "logCount" of characteristic "${characteristicName}" in service "${serviceName}" must be provided as a number.`);
+						else if(characteristic.logCount < 1) throw new InvalidInputError(`The field "logCount" of characteristic "${characteristicName}" in service "${serviceName}" must be greater than or equal to 1.`);
+						break;
+					default:
+						break;
+				}
+			}
+		}
+	}
 
-		//TODO: サービス内のデータ整合性チェック & キャラクタリスティック内のデータ整合性チェック
+	/**
+	 * UUIDのフォーマットが正しいかどうかを確認する。
+	 * @param stringToCheck 確認したい文字列
+	 * @returns フォーマットが正しいなら`true`、そうでないのなら`false`を返す。
+	 */
+	private checkUUIDFormat(stringToCheck: string): boolean {
+		return stringToCheck.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/) != null;
 	}
 
 	/**
