@@ -330,6 +330,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 		if (this.connectionConfig.services.dataService == undefined) throw new NotSupportedError('Data Service is not supported on the connected device.');
 		else if (!Object.keys(this.connectionConfig.services.dataService!.characteristics).includes(sensorName)) throw new InvalidInputError(`Non-existent sensor "${sensorName}" specified.`);
 
+		console.info('Sensor data acquired.');
 		const rawValue: DataView<ArrayBufferLike> = await this.readCharacteristicValue(this.connectionConfig.services.dataService!.uuid, this.connectionConfig.services.dataService!.characteristics[sensorName]!.uuid);
 		switch (this.connectionConfig.services.dataService!.characteristics[sensorName]!.dataType) {
 			case 'int8': {
@@ -415,6 +416,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 
 		const handler = this.getNotificationEventHandler();
 		this.notificationEventListeners[handler] = (event: Event) => {
+			console.info('Sensor data Notification received.');
 			const rawValue: DataView<ArrayBufferLike> = (event.target as BluetoothRemoteGATTCharacteristic).value!;
 			switch (this.connectionConfig.services.dataService!.characteristics[sensorName]!.dataType) {
 				case 'int8': {
@@ -504,6 +506,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 		}
 
 		await this.subscribeCharacteristicNotification(this.connectionConfig.services.dataService!.uuid, this.connectionConfig.services.dataService!.characteristics[sensorName]!.uuid, this.notificationEventListeners[handler]!);
+		console.info('Sensor data subscription started.');
 
 		return handler;
 	}
@@ -518,6 +521,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 		else if (!Object.keys(this.connectionConfig.services.dataService!.characteristics).includes(sensorName)) throw new InvalidInputError(`Non-existent sensor "${sensorName}" specified.`);
 
 		await this.unsubscribeCharacteristicNotification(this.connectionConfig.services.dataService!.uuid, this.connectionConfig.services.dataService!.characteristics[sensorName]!.uuid, this.notificationEventListeners[handler]!);
+		console.info('Sensor data subscription stopped.');
 
 		this.notificationEventListeners[handler] = null;
 	}
