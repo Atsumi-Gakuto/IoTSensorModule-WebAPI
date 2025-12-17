@@ -326,7 +326,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
 	 * @throws Error データの読み出し時に通信エラーが発生した場合に投げられる。
 	 */
-	public async getSensorData(sensorName: string): Promise<number|BigInt|Vector3|Vector3<BigInt>> {
+	public async getSensorData(sensorName: string): Promise<number|BigInt|Vector3<number>|Vector3<BigInt>> {
 		if (this.connectionConfig.services.dataService == undefined) throw new NotSupportedError('Data Service is not supported on the connected device.');
 		else if (!Object.keys(this.connectionConfig.services.dataService!.characteristics).includes(sensorName)) throw new InvalidInputError(`Non-existent sensor "${sensorName}" specified.`);
 
@@ -410,7 +410,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
 	 * @throws Error Notification購読処理中の通信エラーが発生した場合に投げられる。
 	 */
-	public async subscribeSensorData(sensorName: string, listener: (event: Event, value: number|BigInt|Vector3|Vector3<BigInt>) => void): Promise<number> {
+	public async subscribeSensorData(sensorName: string, listener: (event: Event, value: number|BigInt|Vector3<number>|Vector3<BigInt>) => void): Promise<number> {
 		if (this.connectionConfig.services.dataService == undefined) throw new NotSupportedError('Data Service is not supported on the connected device.');
 		else if (!Object.keys(this.connectionConfig.services.dataService!.characteristics).includes(sensorName)) throw new InvalidInputError(`Non-existent sensor "${sensorName}" specified.`);
 
@@ -534,7 +534,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
 	 * @throws Error ログの読み出し時に通信エラーが発生した場合に投げられる。
 	 */
-	public async readSensorLog(sensorName: string): Promise<(number|BigInt|Vector3|Vector3<BigInt>)[]> {
+	public async readSensorLog(sensorName: string): Promise<(number|BigInt|Vector3<number>|Vector3<BigInt>)[]> {
 		if (this.connectionConfig.services.logService == undefined) throw new NotSupportedError('Log Service is not supported on the connected device.');
 		else if (!Object.keys(this.connectionConfig.services.logService!.characteristics).includes(sensorName)) throw new InvalidInputError(`Non-existent sensor "${sensorName}" specified.`);
 
@@ -645,6 +645,173 @@ export class IoTSensorModuleAPI extends EventTarget {
 				throw new InvalidInputError(`Data type "${this.connectionConfig.services.logService!.characteristics[sensorName]!.dataType}" is not valid data type.`);
 			}
 		}
+	}
+
+	/**
+	 * センサーログのNotificationを購読する。
+	 * @param sensorName Notification購読対象のセンサーデータの名称
+	 * @param listener Notification受信時に呼び出されるコールバック関数
+	 * @param listener.event Notification受信時に渡されるイベントオブジェクト（characteristicvaluechanged）
+	 * @param listener.value Notification受信時のセンサーログが配列の形で返される。インデックス番号が若いほど新しいデータになる。各要素はセンサーのデーターフォーマットに応じて整形されている。単なるnumber型か3つの値が1セットになったVector3型か判別する必要がある。
+	 * @returns 登録したNotification購読イベントハンドラーの識別子。アンサブスクライブするときに必要。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがLogServiceをサポートしていない場合に投げられる。
+	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
+	 * @throws Error Notification購読処理中の通信エラーが発生した場合に投げられる。
+	 */
+	public async subscribeSensorLog(sensorName: string, listener: (event: Event, value: (number|BigInt|Vector3<number>|Vector3<BigInt>)[]) => void): Promise<number> {
+		if (this.connectionConfig.services.logService == undefined) throw new NotSupportedError('Log Service is not supported on the connected device.');
+		else if (!Object.keys(this.connectionConfig.services.logService!.characteristics).includes(sensorName)) throw new InvalidInputError(`Non-existent sensor "${sensorName}" specified.`);
+
+		const handler = this.getNotificationEventHandler();
+		this.notificationEventListeners[handler] = (event: Event) => {
+			console.info('Sensor log Notification received.');
+			const rawValue: DataView<ArrayBufferLike> = (event.target as BluetoothRemoteGATTCharacteristic).value!;
+			switch (this.connectionConfig.services.dataService!.characteristics[sensorName]!.dataType) {
+				case 'int8': {
+					const logArray : number[] = [];
+					for (let i = 0; i < rawValue.byteLength; i++) logArray.push(rawValue.getInt8(i));
+					listener(event, logArray);
+					break;
+				}
+				case 'uint8': {
+					const logArray : number[] = [];
+					for (let i = 0; i < rawValue.byteLength; i++) logArray.push(rawValue.getUint8(i));
+					listener(event, logArray);
+					break;
+				}
+				case 'int8_vec3': {
+					const logArray : Vector3<number>[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 3) logArray.push(new Vector3(rawValue.getInt8(i), rawValue.getInt8(i + 1), rawValue.getInt8(i + 2)));
+					listener(event, logArray);
+					break;
+				}
+				case 'uint8_vec3': {
+					const logArray : Vector3<number>[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 3) logArray.push(new Vector3(rawValue.getUint8(i), rawValue.getUint8(i + 1), rawValue.getUint8(i + 2)));
+					listener(event, logArray);
+					break;
+				}
+				case 'int16': {
+					const logArray : number[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 2) logArray.push(rawValue.getInt16(i));
+					listener(event, logArray);
+					break;
+				}
+				case 'uint16': {
+					const logArray : number[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 2) logArray.push(rawValue.getUint16(i));
+					listener(event, logArray);
+					break;
+				}
+				case 'int16_vec3': {
+					const logArray : Vector3<number>[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 6) logArray.push(new Vector3(rawValue.getInt16(i), rawValue.getInt16(i + 2), rawValue.getInt16(i + 4)));
+					listener(event, logArray);
+					break;
+				}
+				case 'uint16_vec3': {
+					const logArray : Vector3<number>[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 6) logArray.push(new Vector3(rawValue.getUint16(i), rawValue.getUint16(i + 2), rawValue.getUint16(i + 4)));
+					listener(event, logArray);
+					break;
+				}
+				case 'int32': {
+					const logArray : number[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 4) logArray.push(rawValue.getInt32(i));
+					listener(event, logArray);
+					break;
+				}
+				case 'uint32': {
+					const logArray : number[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 4) logArray.push(rawValue.getUint32(i));
+					listener(event, logArray);
+					break;
+				}
+				case 'int32_vec3': {
+					const logArray : Vector3<number>[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 12) logArray.push(new Vector3(rawValue.getInt32(i), rawValue.getInt32(i + 4), rawValue.getInt32(i + 8)));
+					listener(event, logArray);
+					break;
+				}
+				case 'uint32_vec3': {
+					const logArray : Vector3<number>[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 12) logArray.push(new Vector3(rawValue.getUint32(i), rawValue.getUint32(i + 4), rawValue.getUint32(i + 8)));
+					listener(event, logArray);
+					break;
+				}
+				case 'int64': {
+					const logArray : BigInt[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 8) logArray.push(rawValue.getBigInt64(i));
+					listener(event, logArray);
+					break;
+				}
+				case 'uint64': {
+					const logArray : BigInt[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 8) logArray.push(rawValue.getBigUint64(i));
+					listener(event, logArray);
+					break;
+				}
+				case 'int64_vec3': {
+					const logArray : Vector3<BigInt>[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 24) logArray.push(new Vector3(rawValue.getBigInt64(i), rawValue.getBigInt64(i + 8), rawValue.getBigInt64(i + 16)));
+					listener(event, logArray);
+					break;
+				}
+				case 'uint64_vec3': {
+					const logArray : Vector3<BigInt>[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 24) logArray.push(new Vector3(rawValue.getBigUint64(i), rawValue.getBigUint64(i + 8), rawValue.getBigUint64(i + 16)));
+					listener(event, logArray);
+					break;
+				}
+				case 'float32': {
+					const logArray : number[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 4) logArray.push(rawValue.getFloat32(i));
+					listener(event, logArray);
+					break;
+				}
+				case 'float64': {
+					const logArray : number[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 8) logArray.push(rawValue.getFloat64(i));
+					listener(event, logArray);
+					break;
+				}
+				case 'float32_vec3': {
+					const logArray : Vector3<number>[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 12) logArray.push(new Vector3(rawValue.getFloat32(i), rawValue.getFloat32(i + 4), rawValue.getFloat32(i + 8)));
+					listener(event, logArray);
+					break;
+				}
+				case 'float64_vec3': {
+					const logArray : Vector3<number>[] = [];
+					for (let i = 0; i < rawValue.byteLength; i += 24) logArray.push(new Vector3(rawValue.getFloat64(i), rawValue.getFloat64(i + 8), rawValue.getFloat64(i + 16)));
+					listener(event, logArray);
+					break;
+				}
+				default: {
+					throw new InvalidInputError(`Data type "${this.connectionConfig.services.dataService!.characteristics[sensorName]!.dataType}" is not valid data type.`);
+				}
+			}
+		}
+
+		await this.subscribeCharacteristicNotification(this.connectionConfig.services.logService!.uuid, this.connectionConfig.services.logService!.characteristics[sensorName]!.uuid, this.notificationEventListeners[handler]!);
+		console.info('Sensor log subscription started.');
+
+		return handler;
+	}
+
+	/**
+	 * センサーログのNotificationの購読を終了する。
+	 * @param sensorName Notification購読対象のセンサーデータの名称
+	 * @param handler サブスクライブ関数の返り値のハンドラー変数
+	 */
+	public async unsubscribeSensorLog(sensorName: string, handler: number): Promise<void> {
+		if (this.connectionConfig.services.logService == undefined) throw new NotSupportedError('Log Service is not supported on the connected device.');
+		else if (!Object.keys(this.connectionConfig.services.logService!.characteristics).includes(sensorName)) throw new InvalidInputError(`Non-existent sensor "${sensorName}" specified.`);
+
+		await this.unsubscribeCharacteristicNotification(this.connectionConfig.services.logService!.uuid, this.connectionConfig.services.logService!.characteristics[sensorName]!.uuid, this.notificationEventListeners[handler]!);
+		console.info('Sensor log subscription stopped.');
+
+		this.notificationEventListeners[handler] = null;
 	}
 }
 

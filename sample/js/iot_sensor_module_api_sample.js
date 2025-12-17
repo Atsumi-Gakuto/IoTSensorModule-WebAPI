@@ -6,6 +6,11 @@ import { IoTSensorModuleAPI } from '../../dist/iot_sensor_module_api.mjs';
 const dataServiceNotificationEventHandlers = {};
 
 /**
+ * Log ServiceのNotificationイベントハンドラーの格納用オブジェクト
+ */
+const logServiceNotificationEventHandlers = {};
+
+/**
  * センサーデータ情報の表にデータを追加する。
  * @param {string} name センサー名。有効なセンサー名かどうかのチェックは行わない。
  * @param {number|{x:number,y:number,z:number}} data センサーから取得したデータ
@@ -234,6 +239,31 @@ async function init() {
 			logServiceSubscribeButtonElement.type = 'checkbox';
 			logServiceSubscribeButtonElement.classList.add('connection_only_control', 'notification_checkbox')
 			logServiceSubscribeButtonElement.disabled = true
+			logServiceSubscribeButtonElement.addEventListener('change', async () => {
+				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
+
+				if (logServiceSubscribeButtonElement.checked) {
+					try {
+						logServiceNotificationEventHandlers[sensorDataName] = await api.subscribeSensorLog(sensorDataName, (event, value) => pushSensorLog(sensorDataName, value, connectionConfig.services.logService.characteristics[sensorDataName].unit));
+					}
+					catch (error) {
+						//TODO: エラーを見やすく表示
+						document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+						throw error;
+					}
+				}
+				else {
+					try {
+						await api.unsubscribeSensorLog(sensorDataName, logServiceNotificationEventHandlers[sensorDataName]);
+					}
+					catch (error) {
+						//TODO: エラーを見やすく表示
+						document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+						throw error;
+					}
+				}
+				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+			});
 			logServiceSubscribeButtonCellElement.append(logServiceSubscribeButtonElement);
 			tableRowElement.append(logServiceSubscribeButtonCellElement);
 		}
