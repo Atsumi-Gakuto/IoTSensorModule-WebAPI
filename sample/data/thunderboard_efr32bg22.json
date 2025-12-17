@@ -8,35 +8,43 @@
 			"characteristics": {
 				"acceleration": {
 					"uuid": "9c821345-c194-4fca-a58a-16e6bfaf21c8",
-					"dataType": "float32_vec3"
+					"dataType": "float32_vec3",
+					"unit": "m/s²"
 				},
 				"gyroscope": {
 					"uuid": "1b1e1384-7f1d-4386-b321-06852f493924",
-					"dataType": "float32_vec3"
+					"dataType": "float32_vec3",
+					"unit": "rad/s"
 				},
 				"temperature": {
 					"uuid": "f8623f8b-4f8e-4571-b1e0-fd6695a4e200",
-					"dataType": "float32"
+					"dataType": "float32",
+					"unit": "°C"
 				},
 				"humidity": {
 					"uuid": "e4a86d76-c7fb-4182-a844-152075e0b835",
-					"dataType": "float32"
+					"dataType": "float32",
+					"unit": "%"
 				},
 				"alsLight": {
 					"uuid": "1b8ef12d-8453-462b-85e6-588f55be59ef",
-					"dataType": "float32"
+					"dataType": "float32",
+					"unit": "lux"
 				},
 				"whiteLight": {
 					"uuid": "a704293c-d426-425d-be84-b77d1a17218c",
-					"dataType": "float32"
+					"dataType": "float32",
+					"unit": "lux"
 				},
 				"hallEffect": {
 					"uuid": "e3b4f962-2e89-4a1f-9fdb-012bc363261b",
-					"dataType": "float32"
+					"dataType": "float32",
+					"unit": "mT"
 				},
 				"soundLevel": {
 					"uuid": "cecc74b2-893b-4fee-84be-8ad7f3d77aa1",
-					"dataType": "float32"
+					"dataType": "float32",
+					"unit": "dB"
 				}
 			}
 		},
@@ -46,42 +54,50 @@
 				"acceleration": {
 					"uuid": "7bafd4a1-ab38-4ee3-a9f8-6afe4df7a6e3",
 					"dataType": "float32_vec3",
-					"logCount": 1
+					"logCount": 1,
+					"unit": "m/s²"
 				},
 				"gyroscope": {
 					"uuid": "900199b6-bacc-4f48-bc68-0262014dcc73",
 					"dataType": "float32_vec3",
-					"logCount": 1
+					"logCount": 1,
+					"unit": "rad/s"
 				},
 				"temperature": {
 					"uuid": "9e253605-4624-4d13-b16f-361fbb88a2a6",
 					"dataType": "float32",
-					"logCount": 1
+					"logCount": 1,
+					"unit": "°C"
 				},
 				"humidity": {
 					"uuid": "6b440fbd-5dfb-4500-8221-8709b6b54f74",
 					"dataType": "float32",
-					"logCount": 1
+					"logCount": 1,
+					"unit": "%"
 				},
 				"alsLight": {
 					"uuid": "301c4b75-86e1-491d-ad84-cc2e2afb66bf",
 					"dataType": "float32",
-					"logCount": 1
+					"logCount": 1,
+					"unit": "lux"
 				},
 				"whiteLight": {
 					"uuid": "cd96baaa-40d0-433a-911d-a08158a0bdab",
 					"dataType": "float32",
-					"logCount": 1
+					"logCount": 1,
+					"unit": "lux"
 				},
 				"hallEffect": {
 					"uuid": "632b17e1-c6e6-4409-a0c9-cf8596b716a8",
 					"dataType": "float32",
-					"logCount": 1
+					"logCount": 1,
+					"unit": "mT"
 				},
 				"soundLevel": {
 					"uuid": "861865bd-8c35-4c3c-bc56-86e66ec4953d",
 					"dataType": "float32",
-					"logCount": 1
+					"logCount": 1,
+					"unit": "dB"
 				}
 			}
 		},

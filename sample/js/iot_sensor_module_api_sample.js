@@ -1,6 +1,26 @@
 import { IoTSensorModuleAPI } from '../../dist/iot_sensor_module_api.mjs';
 
 /**
+ * センサーでた情報の表にデータを追加する。
+ * @param name センサー名。有効なセンサー名かどうかのチェックは行わない。
+ * @param data センサーから取得したデータ
+ * @param unit センサーデータの単位
+ */
+function pushSensorData(name, data, unit) {
+	const tableRowElement = document.createElement('tr');
+	const getTimeElement = document.createElement('td');
+	getTimeElement.innerText = new Date().toLocaleString();
+	tableRowElement.append(getTimeElement);
+	const sensorNameElement = document.createElement('td');
+	sensorNameElement.innerText = name;
+	tableRowElement.append(sensorNameElement);
+	const sensorDataElement = document.createElement('td');
+	sensorDataElement.innerText = data.x == undefined ? `${(Math.round(data * 100) / 100).toFixed(2)}${unit}` : `x=${(Math.round(data.x * 100) / 100).toFixed(2)}${unit}, y=${(Math.round(data.y * 100) / 100).toFixed(2)}${unit}, z=${(Math.round(data.z * 100) / 100).toFixed(2)}${unit}`;
+	tableRowElement.append(sensorDataElement);
+	document.getElementById('table_sensor_data').append(tableRowElement);
+}
+
+/**
  * 初期化関数
  */
 async function init() {
@@ -108,7 +128,17 @@ async function init() {
 			dataServiceGetDataButtonElement.classList.add('connection_only_control')
 			dataServiceGetDataButtonElement.disabled = true
 			dataServiceGetDataButtonElement.addEventListener('click', async () => {
-				console.log(await api.getSensorData(sensorDataName));
+				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
+				let sensorData;
+				try {
+					sensorData = await api.getSensorData(sensorDataName);
+				}
+				catch (error) {
+					//TODO: エラーを見やすく表示
+					throw error;
+				}
+				pushSensorData(sensorDataName, sensorData, connectionConfig.services.dataService.characteristics[sensorDataName].unit);
+				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
 			});
 			dataServiceGetDataButtonCellElement.append(dataServiceGetDataButtonElement);
 			tableRowElement.append(dataServiceGetDataButtonCellElement);
