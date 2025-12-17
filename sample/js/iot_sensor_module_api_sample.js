@@ -13,7 +13,7 @@ async function init() {
 		console.info('Connection config parsed.');
 	} catch (error) {
 		const connectionInfoElement = document.getElementById('message_connection_info');
-		if(error instanceof SyntaxError) {
+		if (error instanceof SyntaxError) {
 			console.error(`Failed to parse connection config. Reason: ${error}`);
 			connectionInfoElement.innerText = '解析失敗';
 		}
@@ -33,7 +33,7 @@ async function init() {
 	try {
 		api = new IoTSensorModuleAPI(connectionConfig);
 	}
-	catch(error) {
+	catch (error) {
 		console.error(`Failed to create API instance. Reason: ${error}`);
 		const apiInstanceElement = document.getElementById('message_api_instance');
 		apiInstanceElement.innerText = '入力情報に誤りあり';
@@ -46,7 +46,7 @@ async function init() {
 
 	// Web Bluetooth対応チェック
 	const isWebBluetoothSupported = api.getIsSupportedWebBluetooth();
-	if(isWebBluetoothSupported) {
+	if (isWebBluetoothSupported) {
 		console.info('Web Bluetooth is supported on this browser.');
 		const supportIndicatorElement = document.getElementById('message_is_web_bluetooth_supported');
 		supportIndicatorElement.innerText = 'はい';
@@ -60,7 +60,7 @@ async function init() {
 	}
 
 	// トリガーデータ可視化の表
-	for(let i = 0; i < api.getNumberOfTriggerData(); i++) {
+	for (let i = 0; i < api.getNumberOfTriggerData(); i++) {
 		const indexElement = document.createElement('td');
 		indexElement.innerText = i.toString();
 		document.getElementById('row_trigger_data_index').append(indexElement);
@@ -71,7 +71,7 @@ async function init() {
 
 	// センサーデータ取得コントロールの表
 	const hasDataService = connectionConfig.services.dataService != undefined;
-	if(hasDataService) {
+	if (hasDataService) {
 		const dataServiceLabelElement = document.createElement('th');
 		dataServiceLabelElement.innerText = 'Data Service';
 		dataServiceLabelElement.colSpan = 2;
@@ -84,7 +84,7 @@ async function init() {
 		document.getElementById('tr_sensor_data_control_header_2').append(subscribeLabelElement);
 	}
 	const hasLogService = connectionConfig.services.logService != undefined;
-	if(hasLogService) {
+	if (hasLogService) {
 		const logServiceLabelElement = document.createElement('th');
 		logServiceLabelElement.innerText = 'Log Service';
 		logServiceLabelElement.colSpan = 2;
@@ -96,17 +96,20 @@ async function init() {
 		subscribeLabelElement.innerText = 'Subscribe';
 		document.getElementById('tr_sensor_data_control_header_2').append(subscribeLabelElement);
 	}
-	for(const sensorDataName in connectionConfig.services.dataService.characteristics) {
+	for (const sensorDataName in connectionConfig.services.dataService.characteristics) {
 		const tableRowElement = document.createElement('tr');
 		const sensorDataNameElement = document.createElement('td');
 		sensorDataNameElement.innerText = sensorDataName;
 		tableRowElement.append(sensorDataNameElement);
-		if(hasDataService) {
+		if (hasDataService) {
 			const dataServiceGetDataButtonCellElement = document.createElement('td');
 			const dataServiceGetDataButtonElement = document.createElement('button');
 			dataServiceGetDataButtonElement.innerText = '取得';
 			dataServiceGetDataButtonElement.classList.add('connection_only_control')
 			dataServiceGetDataButtonElement.disabled = true
+			dataServiceGetDataButtonElement.addEventListener('click', async () => {
+				console.log(await api.getSensorData(sensorDataName));
+			});
 			dataServiceGetDataButtonCellElement.append(dataServiceGetDataButtonElement);
 			tableRowElement.append(dataServiceGetDataButtonCellElement);
 			const dataServiceSubscribeButtonCellElement = document.createElement('td');
@@ -117,7 +120,7 @@ async function init() {
 			dataServiceSubscribeButtonCellElement.append(dataServiceSubscribeButtonElement);
 			tableRowElement.append(dataServiceSubscribeButtonCellElement);
 		}
-		if(hasLogService) {
+		if (hasLogService) {
 			const logServiceGetDataButtonCellElement = document.createElement('td');
 			const logServiceGetDataButtonElement = document.createElement('button');
 			logServiceGetDataButtonElement.innerText = '取得';
@@ -137,7 +140,7 @@ async function init() {
 		document.getElementById('table_sensor_data_control').append(tableRowElement);
 	}
 
-	if(isWebBluetoothSupported) {
+	if (isWebBluetoothSupported) {
 		// トリガーデータ監視ボタン
 		const startObserveButton = document.getElementById('button_start_advertise_observe');
 		startObserveButton.addEventListener('click', async () => api.observeTrigger());
@@ -155,7 +158,7 @@ async function init() {
 		// イベント登録
 		api.addEventListener('trigger-data-received', () => {
 			document.getElementById('message_last_trigger_timestamp').innerText = new Date(api.getLastTriggerTimestamp()).toLocaleString();
-			for(let i = 0; i < api.getNumberOfTriggerData(); i++) {
+			for (let i = 0; i < api.getNumberOfTriggerData(); i++) {
 				document.getElementById('row_trigger_data_flags').children[i].innerText = api.isTriggered(i) ? '✅' : '❌';
 			}
 		});
