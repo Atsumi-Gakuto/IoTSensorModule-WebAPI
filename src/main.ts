@@ -525,6 +525,127 @@ export class IoTSensorModuleAPI extends EventTarget {
 
 		this.notificationEventListeners[handler] = null;
 	}
+
+	/**
+	 * LogServiceからセンサーログを読み出す。
+	 * @param sensorName 読み出し対象のセンサーデータの名称
+	 * @returns 読み出されたセンサーログが配列の形で返される。インデックス番号が若いほど新しいデータになる。各要素はセンサーのデーターフォーマットに応じて整形されている。単なるnumber型か3つの値が1セットになったVector3型か判別する必要がある。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがLogServiceをサポートしていない場合に投げられる。
+	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
+	 * @throws Error ログの読み出し時に通信エラーが発生した場合に投げられる。
+	 */
+	public async readSensorLog(sensorName: string): Promise<(number|BigInt|Vector3|Vector3<BigInt>)[]> {
+		if (this.connectionConfig.services.logService == undefined) throw new NotSupportedError('Log Service is not supported on the connected device.');
+		else if (!Object.keys(this.connectionConfig.services.logService!.characteristics).includes(sensorName)) throw new InvalidInputError(`Non-existent sensor "${sensorName}" specified.`);
+
+		console.info('Sensor log acquired.');
+		const rawValue: DataView<ArrayBufferLike> = await this.readCharacteristicValue(this.connectionConfig.services.logService!.uuid, this.connectionConfig.services.logService!.characteristics[sensorName]!.uuid);
+		switch (this.connectionConfig.services.dataService!.characteristics[sensorName]!.dataType) {
+			case 'int8': {
+				const logArray: number[] = [];
+				for (let i = 0; i < rawValue.byteLength; i++) logArray.push(rawValue.getInt8(i));
+				return logArray;
+			}
+			case 'uint8': {
+				const logArray: number[] = [];
+				for (let i = 0; i < rawValue.byteLength; i++) logArray.push(rawValue.getUint8(i));
+				return logArray;
+			}
+			case 'int8_vec3': {
+				const logArray: Vector3<number>[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 3) logArray.push(new Vector3(rawValue.getInt8(i), rawValue.getInt8(i + 1), rawValue.getInt8(i + 2)));
+				return logArray;
+			}
+			case 'uint8_vec3': {
+				const logArray: Vector3<number>[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 3) logArray.push(new Vector3(rawValue.getUint8(i), rawValue.getUint8(i + 1), rawValue.getUint8(i + 2)));
+				return logArray;
+			}
+			case 'int16': {
+				const logArray: number[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 2) logArray.push(rawValue.getInt16(i));
+				return logArray;
+			}
+			case 'uint16': {
+				const logArray: number[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 2) logArray.push(rawValue.getUint16(i));
+				return logArray;
+			}
+			case 'int16_vec3': {
+				const logArray: Vector3<number>[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 6) logArray.push(new Vector3(rawValue.getInt16(i), rawValue.getInt16(i + 2), rawValue.getInt16(i + 4)));
+				return logArray;
+			}
+			case 'uint16_vec3': {
+				const logArray: Vector3<number>[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 6) logArray.push(new Vector3(rawValue.getUint16(i), rawValue.getUint16(i + 2), rawValue.getUint16(i + 4)));
+				return logArray;
+			}
+			case 'int32': {
+				const logArray: number[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 4) logArray.push(rawValue.getInt32(i));
+				return logArray;
+			}
+			case 'uint32': {
+				const logArray: number[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 4) logArray.push(rawValue.getUint32(i));
+				return logArray;
+			}
+			case 'int32_vec3': {
+				const logArray: Vector3<number>[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 12) logArray.push(new Vector3(rawValue.getInt32(i), rawValue.getInt32(i + 4), rawValue.getInt32(i + 8)));
+				return logArray;
+			}
+			case 'uint32_vec3': {
+				const logArray: Vector3<number>[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 12) logArray.push(new Vector3(rawValue.getUint32(i), rawValue.getUint32(i + 4), rawValue.getUint32(i + 8)));
+				return logArray;
+			}
+			case 'int64': {
+				const logArray: BigInt[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 8) logArray.push(rawValue.getBigInt64(i));
+				return logArray;
+			}
+			case 'uint64': {
+				const logArray: BigInt[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 8) logArray.push(rawValue.getBigUint64(i));
+				return logArray;
+			}
+			case 'int64_vec3': {
+				const logArray: Vector3<BigInt>[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 24) logArray.push(new Vector3<BigInt>(rawValue.getBigInt64(i), rawValue.getBigInt64(i + 8), rawValue.getBigInt64(i + 16)));
+				return logArray;
+			}
+			case 'uint64_vec3': {
+				const logArray: Vector3<BigInt>[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 24) logArray.push(new Vector3<BigInt>(rawValue.getBigUint64(i), rawValue.getBigUint64(i + 8), rawValue.getBigUint64(i + 16)));
+				return logArray;
+			}
+			case 'float32': {
+				const logArray: number[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 4) logArray.push(rawValue.getFloat32(i));
+				return logArray;
+			}
+			case 'float64': {
+				const logArray: number[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 8) logArray.push(rawValue.getFloat64(i));
+				return logArray;
+			}
+			case 'float32_vec3': {
+				const logArray: Vector3<number>[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 12) logArray.push(new Vector3(rawValue.getFloat32(i), rawValue.getFloat32(i + 4), rawValue.getFloat32(i + 8)));
+				return logArray;
+			}
+			case 'float64_vec3': {
+				const logArray: Vector3<number>[] = [];
+				for (let i = 0; i < rawValue.byteLength; i += 24) logArray.push(new Vector3(rawValue.getFloat64(i), rawValue.getFloat64(i + 8), rawValue.getFloat64(i + 16)));
+				return logArray;
+			}
+			default: {
+				throw new InvalidInputError(`Data type "${this.connectionConfig.services.logService!.characteristics[sensorName]!.dataType}" is not valid data type.`);
+			}
+		}
+	}
 }
 
 // グローバル宣言用

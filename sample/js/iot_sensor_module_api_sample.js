@@ -6,10 +6,10 @@ import { IoTSensorModuleAPI } from '../../dist/iot_sensor_module_api.mjs';
 const dataServiceNotificationEventHandlers = {};
 
 /**
- * センサーでた情報の表にデータを追加する。
- * @param name センサー名。有効なセンサー名かどうかのチェックは行わない。
- * @param data センサーから取得したデータ
- * @param unit センサーデータの単位
+ * センサーデータ情報の表にデータを追加する。
+ * @param {string} name センサー名。有効なセンサー名かどうかのチェックは行わない。
+ * @param {number|{x:number,y:number,z:number}} data センサーから取得したデータ
+ * @param {string} unit センサーデータの単位
  */
 function pushSensorData(name, data, unit) {
 	const tableRowElement = document.createElement('tr');
@@ -23,6 +23,32 @@ function pushSensorData(name, data, unit) {
 	sensorDataElement.innerText = data.x == undefined ? `${(Math.round(data * 100) / 100).toFixed(2)}${unit}` : `x=${(Math.round(data.x * 100) / 100).toFixed(2)}${unit}, y=${(Math.round(data.y * 100) / 100).toFixed(2)}${unit}, z=${(Math.round(data.z * 100) / 100).toFixed(2)}${unit}`;
 	tableRowElement.append(sensorDataElement);
 	document.getElementById('table_sensor_data').append(tableRowElement);
+}
+
+/**
+ * センサーログ情報の表にデータを追加する。
+ * @param {string} name センサー名。有効なセンサー名かどうかのチェックは行わない。
+ * @param {(number|{x:number,y:number,z:number})[]} data センサーから取得したログデータの配列
+ * @param {string} unit センサーデータの単位
+ */
+function pushSensorLog(name, data, unit) {
+	const tableRowElement = document.createElement('tr');
+	const getTimeElement = document.createElement('td');
+	getTimeElement.innerText = new Date().toLocaleString();
+	tableRowElement.append(getTimeElement);
+	const sensorNameElement = document.createElement('td');
+	sensorNameElement.innerText = name;
+	tableRowElement.append(sensorNameElement);
+	const sensorLogElement = document.createElement('td');
+	const sensorLogListElement = document.createElement('ol');
+	data.forEach((elm) => {
+		const sensorLogListElmElement = document.createElement('li');
+		sensorLogListElmElement.innerText = elm.x == undefined ? `${(Math.round(elm * 100) / 100).toFixed(2)}${unit}` : `x=${(Math.round(elm.x * 100) / 100).toFixed(2)}${unit}, y=${(Math.round(elm.y * 100) / 100).toFixed(2)}${unit}, z=${(Math.round(elm.z * 100) / 100).toFixed(2)}${unit}`;
+		sensorLogListElement.append(sensorLogListElmElement);
+	});
+	sensorLogElement.append(sensorLogListElement);
+	tableRowElement.append(sensorLogElement);
+	document.getElementById('table_sensor_log').append(tableRowElement);
 }
 
 /**
@@ -167,7 +193,6 @@ async function init() {
 					}
 				}
 				else {
-					console.log("A");
 					try {
 						await api.unsubscribeSensorData(sensorDataName, dataServiceNotificationEventHandlers[sensorDataName]);
 					}
@@ -188,6 +213,20 @@ async function init() {
 			logServiceGetDataButtonElement.innerText = '取得';
 			logServiceGetDataButtonElement.classList.add('connection_only_control')
 			logServiceGetDataButtonElement.disabled = true
+			logServiceGetDataButtonElement.addEventListener('click', async () => {
+				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
+				let sensorLog;
+				try {
+					sensorLog = await api.readSensorLog(sensorDataName);
+				}
+				catch (error) {
+					//TODO: エラーを見やすく表示
+					document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+					throw error;
+				}
+				pushSensorLog(sensorDataName, sensorLog, connectionConfig.services.logService.characteristics[sensorDataName].unit);
+				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+			});
 			logServiceGetDataButtonCellElement.append(logServiceGetDataButtonElement);
 			tableRowElement.append(logServiceGetDataButtonCellElement);
 			const logServiceSubscribeButtonCellElement = document.createElement('td');
