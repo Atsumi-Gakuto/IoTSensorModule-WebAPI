@@ -340,57 +340,75 @@ export class IoTSensorModuleAPI extends EventTarget {
 				return rawValue.getUint8(0);
 			}
 			case 'int8_vec3': {
+				if (rawValue.byteLength < 3) throw new InvalidInputError('Received data length is insufficient for int8_vec3.');
 				return new Vector3(rawValue.getInt8(0), rawValue.getInt8(1), rawValue.getInt8(2));
 			}
 			case 'uint8_vec3': {
+				if (rawValue.byteLength < 3) throw new InvalidInputError('Received data length is insufficient for uint8_vec3.');
 				return new Vector3(rawValue.getUint8(0), rawValue.getUint8(1), rawValue.getUint8(2));
 			}
 			case 'int16': {
+				if (rawValue.byteLength < 2) throw new InvalidInputError('Received data length is insufficient for int16.');
 				return rawValue.getInt16(0);
 			}
 			case 'uint16': {
+				if (rawValue.byteLength < 2) throw new InvalidInputError('Received data length is insufficient for uint16.');
 				return rawValue.getUint16(0);
 			}
 			case 'int16_vec3': {
+				if (rawValue.byteLength < 6) throw new InvalidInputError('Received data length is insufficient for int16_vec3.');
 				return new Vector3(rawValue.getInt16(0), rawValue.getInt16(2), rawValue.getInt16(4));
 			}
 			case 'uint16_vec3': {
+				if (rawValue.byteLength < 6) throw new InvalidInputError('Received data length is insufficient for uint16_vec3.');
 				return new Vector3(rawValue.getUint16(0), rawValue.getUint16(2), rawValue.getUint16(4));
 			}
 			case 'int32': {
+				if (rawValue.byteLength < 4) throw new InvalidInputError('Received data length is insufficient for int32.');
 				return rawValue.getInt32(0);
 			}
 			case 'uint32': {
+				if (rawValue.byteLength < 4) throw new InvalidInputError('Received data length is insufficient for uint32.');
 				return rawValue.getUint32(0);
 			}
 			case 'int32_vec3': {
+				if (rawValue.byteLength < 12) throw new InvalidInputError('Received data length is insufficient for int32_vec3.');
 				return new Vector3(rawValue.getInt32(0), rawValue.getInt32(4), rawValue.getInt32(8));
 			}
 			case 'uint32_vec3': {
+				if (rawValue.byteLength < 12) throw new InvalidInputError('Received data length is insufficient for uint32_vec3.');
 				return new Vector3(rawValue.getUint32(0), rawValue.getUint32(4), rawValue.getUint32(8));
 			}
 			case 'int64': {
+				if (rawValue.byteLength < 8) throw new InvalidInputError('Received data length is insufficient for int64.');
 				return rawValue.getBigInt64(0);
 			}
 			case 'uint64': {
+				if (rawValue.byteLength < 8) throw new InvalidInputError('Received data length is insufficient for uint64.');
 				return rawValue.getBigUint64(0);
 			}
 			case 'int64_vec3': {
+				if (rawValue.byteLength < 24) throw new InvalidInputError('Received data length is insufficient for int64_vec3.');
 				return new Vector3<BigInt>(rawValue.getBigInt64(0), rawValue.getBigInt64(8), rawValue.getBigInt64(16));
 			}
 			case 'uint64_vec3': {
+				if (rawValue.byteLength < 24) throw new InvalidInputError('Received data length is insufficient for uint64_vec3.');
 				return new Vector3<BigInt>(rawValue.getBigUint64(0), rawValue.getBigUint64(8), rawValue.getBigUint64(16));
 			}
 			case 'float32': {
+				if (rawValue.byteLength < 4) throw new InvalidInputError('Received data length is insufficient for float32.');
 				return rawValue.getFloat32(0);
 			}
 			case 'float64': {
+				if (rawValue.byteLength < 8) throw new InvalidInputError('Received data length is insufficient for float64.');
 				return rawValue.getFloat64(0);
 			}
 			case 'float32_vec3': {
+				if (rawValue.byteLength < 12) throw new InvalidInputError('Received data length is insufficient for float32_vec3.');
 				return new Vector3(rawValue.getFloat32(0), rawValue.getFloat32(4), rawValue.getFloat32(8));
 			}
 			case 'float64_vec3': {
+				if (rawValue.byteLength < 24) throw new InvalidInputError('Received data length is insufficient for float64_vec3.');
 				return new Vector3(rawValue.getFloat64(0), rawValue.getFloat64(8), rawValue.getFloat64(16));
 			}
 			default: {
@@ -428,74 +446,92 @@ export class IoTSensorModuleAPI extends EventTarget {
 					break;
 				}
 				case 'int8_vec3': {
+					if (rawValue.byteLength < 3) throw new InvalidInputError('Received data length is insufficient for int8_vec3.');
 					listener(event, new Vector3(rawValue.getInt8(0), rawValue.getInt8(1), rawValue.getInt8(2)));
 					break;
 				}
 				case 'uint8_vec3': {
+					if (rawValue.byteLength < 3) throw new InvalidInputError('Received data length is insufficient for uint8_vec3.');
 					listener(event, new Vector3(rawValue.getUint8(0), rawValue.getUint8(1), rawValue.getUint8(2)));
 					break;
 				}
 				case 'int16': {
+					if (rawValue.byteLength < 2) throw new InvalidInputError('Received data length is insufficient for int16.');
 					listener(event, rawValue.getInt16(0));
 					break;
 				}
 				case 'uint16': {
+					if (rawValue.byteLength < 2) throw new InvalidInputError('Received data length is insufficient for uint16.');
 					listener(event, rawValue.getUint16(0));
 					break;
 				}
 				case 'int16_vec3': {
+					if (rawValue.byteLength < 6) throw new InvalidInputError('Received data length is insufficient for int16_vec3.');
 					listener(event, new Vector3(rawValue.getInt16(0), rawValue.getInt16(2), rawValue.getInt16(4)));
 					break;
 				}
 				case 'uint16_vec3': {
+					if (rawValue.byteLength < 6) throw new InvalidInputError('Received data length is insufficient for uint16_vec3.');
 					listener(event, new Vector3(rawValue.getUint16(0), rawValue.getUint16(2), rawValue.getUint16(4)));
 					break;
 				}
 				case 'int32': {
+					if (rawValue.byteLength < 4) throw new InvalidInputError('Received data length is insufficient for int32.');
 					listener(event, rawValue.getInt32(0));
 					break;
 				}
 				case 'uint32': {
+					if (rawValue.byteLength < 4) throw new InvalidInputError('Received data length is insufficient for uint32.');
 					listener(event, rawValue.getUint32(0));
 					break;
 				}
 				case 'int32_vec3': {
+					if (rawValue.byteLength < 12) throw new InvalidInputError('Received data length is insufficient for int32_vec3.');
 					listener(event, new Vector3(rawValue.getInt32(0), rawValue.getInt32(4), rawValue.getInt32(8)));
 					break;
 				}
 				case 'uint32_vec3': {
+					if (rawValue.byteLength < 12) throw new InvalidInputError('Received data length is insufficient for uint32_vec3.');
 					listener(event, new Vector3(rawValue.getUint32(0), rawValue.getUint32(4), rawValue.getUint32(8)));
 					break;
 				}
 				case 'int64': {
+					if (rawValue.byteLength < 8) throw new InvalidInputError('Received data length is insufficient for int64.');
 					listener(event, rawValue.getBigInt64(0));
 					break;
 				}
 				case 'uint64': {
+					if (rawValue.byteLength < 8) throw new InvalidInputError('Received data length is insufficient for uint64.');
 					listener(event, rawValue.getBigUint64(0));
 					break;
 				}
 				case 'int64_vec3': {
+					if (rawValue.byteLength < 24) throw new InvalidInputError('Received data length is insufficient for int64_vec3.');
 					listener(event, new Vector3<BigInt>(rawValue.getBigInt64(0), rawValue.getBigInt64(8), rawValue.getBigInt64(16)));
 					break;
 				}
 				case 'uint64_vec3': {
+					if (rawValue.byteLength < 24) throw new InvalidInputError('Received data length is insufficient for uint64_vec3.');
 					listener(event, new Vector3<BigInt>(rawValue.getBigUint64(0), rawValue.getBigUint64(8), rawValue.getBigUint64(16)));
 					break;
 				}
 				case 'float32': {
+					if (rawValue.byteLength < 4) throw new InvalidInputError('Received data length is insufficient for float32.');
 					listener(event, rawValue.getFloat32(0));
 					break;
 				}
 				case 'float64': {
+					if (rawValue.byteLength < 8) throw new InvalidInputError('Received data length is insufficient for float64.');
 					listener(event, rawValue.getFloat64(0));
 					break;
 				}
 				case 'float32_vec3': {
+					if (rawValue.byteLength < 12) throw new InvalidInputError('Received data length is insufficient for float32_vec3.');
 					listener(event, new Vector3(rawValue.getFloat32(0), rawValue.getFloat32(4), rawValue.getFloat32(8)));
 					break;
 				}
 				case 'float64_vec3': {
+					if (rawValue.byteLength < 24) throw new InvalidInputError('Received data length is insufficient for float64_vec3.');
 					listener(event, new Vector3(rawValue.getFloat64(0), rawValue.getFloat64(8), rawValue.getFloat64(16)));
 					break;
 				}
@@ -552,91 +588,109 @@ export class IoTSensorModuleAPI extends EventTarget {
 				return logArray;
 			}
 			case 'int8_vec3': {
+				if(rawValue.byteLength % 3 != 0) throw new InvalidInputError('Received data length is not valid for int8_vec3 log.');
 				const logArray: Vector3<number>[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 3) logArray.push(new Vector3(rawValue.getInt8(i), rawValue.getInt8(i + 1), rawValue.getInt8(i + 2)));
 				return logArray;
 			}
 			case 'uint8_vec3': {
+				if(rawValue.byteLength % 3 != 0) throw new InvalidInputError('Received data length is not valid for uint8_vec3 log.');
 				const logArray: Vector3<number>[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 3) logArray.push(new Vector3(rawValue.getUint8(i), rawValue.getUint8(i + 1), rawValue.getUint8(i + 2)));
 				return logArray;
 			}
 			case 'int16': {
+				if(rawValue.byteLength % 2 != 0) throw new InvalidInputError('Received data length is not valid for int16 log.');
 				const logArray: number[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 2) logArray.push(rawValue.getInt16(i));
 				return logArray;
 			}
 			case 'uint16': {
+				if(rawValue.byteLength % 2 != 0) throw new InvalidInputError('Received data length is not valid for uint16 log.');
 				const logArray: number[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 2) logArray.push(rawValue.getUint16(i));
 				return logArray;
 			}
 			case 'int16_vec3': {
+				if(rawValue.byteLength % 6 != 0) throw new InvalidInputError('Received data length is not valid for int16_vec3 log.');
 				const logArray: Vector3<number>[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 6) logArray.push(new Vector3(rawValue.getInt16(i), rawValue.getInt16(i + 2), rawValue.getInt16(i + 4)));
 				return logArray;
 			}
 			case 'uint16_vec3': {
+				if(rawValue.byteLength % 6 != 0) throw new InvalidInputError('Received data length is not valid for uint16_vec3 log.');
 				const logArray: Vector3<number>[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 6) logArray.push(new Vector3(rawValue.getUint16(i), rawValue.getUint16(i + 2), rawValue.getUint16(i + 4)));
 				return logArray;
 			}
 			case 'int32': {
+				if (rawValue.byteLength < 4) throw new InvalidInputError('Received data length is insufficient for int32.');
 				const logArray: number[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 4) logArray.push(rawValue.getInt32(i));
 				return logArray;
 			}
 			case 'uint32': {
+				if (rawValue.byteLength < 4) throw new InvalidInputError('Received data length is insufficient for uint32.');
 				const logArray: number[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 4) logArray.push(rawValue.getUint32(i));
 				return logArray;
 			}
 			case 'int32_vec3': {
+				if (rawValue.byteLength < 12) throw new InvalidInputError('Received data length is insufficient for int32_vec3.');
 				const logArray: Vector3<number>[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 12) logArray.push(new Vector3(rawValue.getInt32(i), rawValue.getInt32(i + 4), rawValue.getInt32(i + 8)));
 				return logArray;
 			}
 			case 'uint32_vec3': {
+				if (rawValue.byteLength < 12) throw new InvalidInputError('Received data length is insufficient for uint32_vec3.');
 				const logArray: Vector3<number>[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 12) logArray.push(new Vector3(rawValue.getUint32(i), rawValue.getUint32(i + 4), rawValue.getUint32(i + 8)));
 				return logArray;
 			}
 			case 'int64': {
+				if (rawValue.byteLength < 8) throw new InvalidInputError('Received data length is insufficient for int64.');
 				const logArray: BigInt[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 8) logArray.push(rawValue.getBigInt64(i));
 				return logArray;
 			}
 			case 'uint64': {
+				if (rawValue.byteLength < 8) throw new InvalidInputError('Received data length is insufficient for uint64.');
 				const logArray: BigInt[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 8) logArray.push(rawValue.getBigUint64(i));
 				return logArray;
 			}
 			case 'int64_vec3': {
+				if (rawValue.byteLength < 24) throw new InvalidInputError('Received data length is insufficient for int64_vec3.');
 				const logArray: Vector3<BigInt>[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 24) logArray.push(new Vector3<BigInt>(rawValue.getBigInt64(i), rawValue.getBigInt64(i + 8), rawValue.getBigInt64(i + 16)));
 				return logArray;
 			}
 			case 'uint64_vec3': {
+				if (rawValue.byteLength < 24) throw new InvalidInputError('Received data length is insufficient for uint64_vec3.');
 				const logArray: Vector3<BigInt>[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 24) logArray.push(new Vector3<BigInt>(rawValue.getBigUint64(i), rawValue.getBigUint64(i + 8), rawValue.getBigUint64(i + 16)));
 				return logArray;
 			}
 			case 'float32': {
+				if (rawValue.byteLength < 4) throw new InvalidInputError('Received data length is insufficient for float32.');
 				const logArray: number[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 4) logArray.push(rawValue.getFloat32(i));
 				return logArray;
 			}
 			case 'float64': {
+				if (rawValue.byteLength < 8) throw new InvalidInputError('Received data length is insufficient for float64.');
 				const logArray: number[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 8) logArray.push(rawValue.getFloat64(i));
 				return logArray;
 			}
 			case 'float32_vec3': {
+				if (rawValue.byteLength < 12) throw new InvalidInputError('Received data length is insufficient for float32_vec3.');
 				const logArray: Vector3<number>[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 12) logArray.push(new Vector3(rawValue.getFloat32(i), rawValue.getFloat32(i + 4), rawValue.getFloat32(i + 8)));
 				return logArray;
 			}
 			case 'float64_vec3': {
+				if (rawValue.byteLength < 24) throw new InvalidInputError('Received data length is insufficient for float64_vec3.');
 				const logArray: Vector3<number>[] = [];
 				for (let i = 0; i < rawValue.byteLength; i += 24) logArray.push(new Vector3(rawValue.getFloat64(i), rawValue.getFloat64(i + 8), rawValue.getFloat64(i + 16)));
 				return logArray;
@@ -680,108 +734,126 @@ export class IoTSensorModuleAPI extends EventTarget {
 					break;
 				}
 				case 'int8_vec3': {
+					if(rawValue.byteLength % 3 != 0) throw new InvalidInputError('Received data length is not valid for int8_vec3 log.');
 					const logArray : Vector3<number>[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 3) logArray.push(new Vector3(rawValue.getInt8(i), rawValue.getInt8(i + 1), rawValue.getInt8(i + 2)));
 					listener(event, logArray);
 					break;
 				}
 				case 'uint8_vec3': {
+					if(rawValue.byteLength % 3 != 0) throw new InvalidInputError('Received data length is not valid for uint8_vec3 log.');
 					const logArray : Vector3<number>[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 3) logArray.push(new Vector3(rawValue.getUint8(i), rawValue.getUint8(i + 1), rawValue.getUint8(i + 2)));
 					listener(event, logArray);
 					break;
 				}
 				case 'int16': {
+					if (rawValue.byteLength < 2) throw new InvalidInputError('Received data length is insufficient for int16.');
 					const logArray : number[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 2) logArray.push(rawValue.getInt16(i));
 					listener(event, logArray);
 					break;
 				}
 				case 'uint16': {
+					if (rawValue.byteLength < 2) throw new InvalidInputError('Received data length is insufficient for uint16.');
 					const logArray : number[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 2) logArray.push(rawValue.getUint16(i));
 					listener(event, logArray);
 					break;
 				}
 				case 'int16_vec3': {
+					if (rawValue.byteLength < 6) throw new InvalidInputError('Received data length is insufficient for int16_vec3.');
 					const logArray : Vector3<number>[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 6) logArray.push(new Vector3(rawValue.getInt16(i), rawValue.getInt16(i + 2), rawValue.getInt16(i + 4)));
 					listener(event, logArray);
 					break;
 				}
 				case 'uint16_vec3': {
+					if (rawValue.byteLength < 6) throw new InvalidInputError('Received data length is insufficient for uint16_vec3.');
 					const logArray : Vector3<number>[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 6) logArray.push(new Vector3(rawValue.getUint16(i), rawValue.getUint16(i + 2), rawValue.getUint16(i + 4)));
 					listener(event, logArray);
 					break;
 				}
 				case 'int32': {
+					if (rawValue.byteLength < 4) throw new InvalidInputError('Received data length is insufficient for int32.');
 					const logArray : number[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 4) logArray.push(rawValue.getInt32(i));
 					listener(event, logArray);
 					break;
 				}
 				case 'uint32': {
+					if (rawValue.byteLength < 4) throw new InvalidInputError('Received data length is insufficient for uint32.');
 					const logArray : number[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 4) logArray.push(rawValue.getUint32(i));
 					listener(event, logArray);
 					break;
 				}
 				case 'int32_vec3': {
+					if (rawValue.byteLength < 12) throw new InvalidInputError('Received data length is insufficient for int32_vec3.');
 					const logArray : Vector3<number>[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 12) logArray.push(new Vector3(rawValue.getInt32(i), rawValue.getInt32(i + 4), rawValue.getInt32(i + 8)));
 					listener(event, logArray);
 					break;
 				}
 				case 'uint32_vec3': {
+					if (rawValue.byteLength < 12) throw new InvalidInputError('Received data length is insufficient for uint32_vec3.');
 					const logArray : Vector3<number>[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 12) logArray.push(new Vector3(rawValue.getUint32(i), rawValue.getUint32(i + 4), rawValue.getUint32(i + 8)));
 					listener(event, logArray);
 					break;
 				}
 				case 'int64': {
+					if (rawValue.byteLength < 8) throw new InvalidInputError('Received data length is insufficient for int64.');
 					const logArray : BigInt[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 8) logArray.push(rawValue.getBigInt64(i));
 					listener(event, logArray);
 					break;
 				}
 				case 'uint64': {
+					if (rawValue.byteLength < 8) throw new InvalidInputError('Received data length is insufficient for uint64.');
 					const logArray : BigInt[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 8) logArray.push(rawValue.getBigUint64(i));
 					listener(event, logArray);
 					break;
 				}
 				case 'int64_vec3': {
+					if (rawValue.byteLength < 24) throw new InvalidInputError('Received data length is insufficient for int64_vec3.');
 					const logArray : Vector3<BigInt>[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 24) logArray.push(new Vector3(rawValue.getBigInt64(i), rawValue.getBigInt64(i + 8), rawValue.getBigInt64(i + 16)));
 					listener(event, logArray);
 					break;
 				}
 				case 'uint64_vec3': {
+					if (rawValue.byteLength < 24) throw new InvalidInputError('Received data length is insufficient for uint64_vec3.');
 					const logArray : Vector3<BigInt>[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 24) logArray.push(new Vector3(rawValue.getBigUint64(i), rawValue.getBigUint64(i + 8), rawValue.getBigUint64(i + 16)));
 					listener(event, logArray);
 					break;
 				}
 				case 'float32': {
+					if (rawValue.byteLength < 4) throw new InvalidInputError('Received data length is insufficient for float32.');
 					const logArray : number[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 4) logArray.push(rawValue.getFloat32(i));
 					listener(event, logArray);
 					break;
 				}
 				case 'float64': {
+					if (rawValue.byteLength < 8) throw new InvalidInputError('Received data length is insufficient for float64.');
 					const logArray : number[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 8) logArray.push(rawValue.getFloat64(i));
 					listener(event, logArray);
 					break;
 				}
 				case 'float32_vec3': {
+					if (rawValue.byteLength < 12) throw new InvalidInputError('Received data length is insufficient for float32_vec3.');
 					const logArray : Vector3<number>[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 12) logArray.push(new Vector3(rawValue.getFloat32(i), rawValue.getFloat32(i + 4), rawValue.getFloat32(i + 8)));
 					listener(event, logArray);
 					break;
 				}
 				case 'float64_vec3': {
+					if (rawValue.byteLength < 24) throw new InvalidInputError('Received data length is insufficient for float64_vec3.');
 					const logArray : Vector3<number>[] = [];
 					for (let i = 0; i < rawValue.byteLength; i += 24) logArray.push(new Vector3(rawValue.getFloat64(i), rawValue.getFloat64(i + 8), rawValue.getFloat64(i + 16)));
 					listener(event, logArray);
