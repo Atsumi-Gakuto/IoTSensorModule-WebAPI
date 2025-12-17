@@ -32,6 +32,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 */
 	private connectedDevice: BluetoothDevice | null = null;
 
+	private readonly notificationEventListeners: (((event: Event) => void)|null)[] = [];
+
 	/**
 	 * コンストラクタ
 	 * @param connectionConfig 接続相手となるIoTセンサモジュールの接続情報
@@ -149,6 +151,16 @@ export class IoTSensorModuleAPI extends EventTarget {
 	}
 
 	/**
+	 * Notification購読イベント用の空いているイベントハンドラーを返す。
+	 */
+	public getNotificationEventHandler(): number {
+		for (let i: number = 0; i < this.notificationEventListeners.length; i++) {
+			if (this.notificationEventListeners[i] == null) return i;
+		}
+		return this.notificationEventListeners.length;
+	}
+
+	/**
 	 * トリガーデータの指定したインデックスが立っているかどうかを返す。
 	 * @param index 確認したトリガーデータのインデックス（0〜52）
 	 * @throws InvalidInputError 指定したインデックスが0〜52の範囲外である場合に投げられる。
@@ -258,7 +270,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 	}
 
 	/**
-	 * 接続したBLEデバイス内のGATTサーバー上の指定したキャラクタリスティックからデータを読み出す。
+	 * 接続したIoTセンサモジュール内のGATTサーバー上の指定したキャラクタリスティックからデータを読み出す。
 	 * @param serviceUuid データ読み出し対象のキャラクタリスティックが含まれるサービスのUUID
 	 * @param characteristicUuid データ読み出し対象のキャラクタリスティックのUUID
 	 * @returns 読み出されたデータが符号なし8ビット整数の配列として返される。
@@ -273,11 +285,46 @@ export class IoTSensorModuleAPI extends EventTarget {
 	}
 
 	/**
+	 * 接続したIoTセンサモジュール内のGATTサーバー上の指定したキャラクタリスティックのNotificationを購読する。
+	 * @param serviceUuid Notification購読対象のキャラクタリスティックが含まれるサービスのUUID
+	 * @param characteristicUuid Notification購読対象のキャラクタリスティックのUUID
+	 * @param listener Notification受信時に呼び出されるコールバック関数
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws Error Notification購読処理中の通信エラーが発生した場合に投げられる。
+	 */
+	private async subscribeCharacteristicNotification(serviceUuid: string, characteristicUuid: string, listener: (event: Event) => void): Promise<void> {
+		if (this.connectedDevice == null) throw new InvalidStateError('No device is connected.');
+		else if (this.connectedDevice.gatt == null) throw new InvalidStateError('GATT server not found on the selected device.');
+
+		const characteristic = await (await this.connectedDevice.gatt!.getPrimaryService(serviceUuid)).getCharacteristic(characteristicUuid);
+		characteristic.addEventListener('characteristicvaluechanged', listener);
+		await characteristic.startNotifications();
+	}
+
+	/**
+	 * 接続したIoTセンサモジュール内のGATTサーバー上の指定したキャラクタリスティックのNotificationの購読を終了する。
+	 * @param serviceUuid Notification購読終了対象のキャラクタリスティックが含まれるサービスのUUID
+	 * @param characteristicUuid Notification購読終了対象のキャラクタリスティックのUUID
+	 * @param listener イベントリスナー解除用のリスナー関数。サブスクライブしたときのものと同じものを渡す。
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws Error Notification購読終了処理中の通信エラーが発生した場合に投げられる。
+	 */
+	private async unsubscribeCharacteristicNotification(serviceUuid: string, characteristicUuid: string, listener: (event: Event) => void): Promise<void> {
+		if (this.connectedDevice == null) throw new InvalidStateError('No device is connected.');
+		else if (this.connectedDevice.gatt == null) throw new InvalidStateError('GATT server not found on the selected device.');
+
+		const characteristic = await (await this.connectedDevice.gatt!.getPrimaryService(serviceUuid)).getCharacteristic(characteristicUuid);
+		characteristic.removeEventListener('characteristicvaluechanged', listener);
+		await characteristic.stopNotifications();
+	}
+
+	/**
 	 * DataServiceからセンサーデータを読み出す。
 	 * @param sensorName 読み出し対象のセンサーデータの名称
 	 * @returns 読み出されたセンサーデータ。センサーのデーターフォーマットに応じて整形された値が返される。単なるnumber型か3つの値が1セットになったVector3型か判別する必要がある。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがDataServiceをサポートしていない場合に投げられる。
 	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
+	 * @throws Error データの読み出し時に通信エラーが発生した場合に投げられる。
 	 */
 	public async getSensorData(sensorName: string): Promise<number|BigInt|Vector3|Vector3<BigInt>> {
 		if (this.connectionConfig.services.dataService == undefined) throw new NotSupportedError('Data Service is not supported on the connected device.');
@@ -349,6 +396,130 @@ export class IoTSensorModuleAPI extends EventTarget {
 				throw new InvalidInputError(`Data type "${this.connectionConfig.services.dataService!.characteristics[sensorName]!.dataType}" is not valid data type.`);
 			}
 		}
+	}
+
+	/**
+	 * センサーデータのNotificationを購読する。
+	 * @param sensorName Notification購読対象のセンサーデータの名称
+	 * @param listener Notification受信時に呼び出されるコールバック関数
+	 * @param listener.event Notification受信時に渡されるイベントオブジェクト（characteristicvaluechanged）
+	 * @param listener.value Notification受信時に渡されるセンサーデータ。センサーのデーターフォーマットに応じて整形された値が渡される。単なるnumber型か3つの値が1セットになったVector3型か判別する必要がある。
+	 * @returns 登録したNotification購読イベントハンドラーの識別子。アンサブスクライブするときに必要。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがDataServiceをサポートしていない場合に投げられる。
+	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
+	 * @throws Error Notification購読処理中の通信エラーが発生した場合に投げられる。
+	 */
+	public async subscribeSensorData(sensorName: string, listener: (event: Event, value: number|BigInt|Vector3|Vector3<BigInt>) => void): Promise<number> {
+		if (this.connectionConfig.services.dataService == undefined) throw new NotSupportedError('Data Service is not supported on the connected device.');
+		else if (!Object.keys(this.connectionConfig.services.dataService!.characteristics).includes(sensorName)) throw new InvalidInputError(`Non-existent sensor "${sensorName}" specified.`);
+
+		const handler = this.getNotificationEventHandler();
+		this.notificationEventListeners[handler] = (event: Event) => {
+			const rawValue: DataView<ArrayBufferLike> = (event.target as BluetoothRemoteGATTCharacteristic).value!;
+			switch (this.connectionConfig.services.dataService!.characteristics[sensorName]!.dataType) {
+				case 'int8': {
+					listener(event, rawValue.getInt8(0));
+					break;
+				}
+				case 'uint8': {
+					listener(event, rawValue.getUint8(0));
+					break;
+				}
+				case 'int8_vec3': {
+					listener(event, new Vector3(rawValue.getInt8(0), rawValue.getInt8(1), rawValue.getInt8(2)));
+					break;
+				}
+				case 'uint8_vec3': {
+					listener(event, new Vector3(rawValue.getUint8(0), rawValue.getUint8(1), rawValue.getUint8(2)));
+					break;
+				}
+				case 'int16': {
+					listener(event, rawValue.getInt16(0));
+					break;
+				}
+				case 'uint16': {
+					listener(event, rawValue.getUint16(0));
+					break;
+				}
+				case 'int16_vec3': {
+					listener(event, new Vector3(rawValue.getInt16(0), rawValue.getInt16(2), rawValue.getInt16(4)));
+					break;
+				}
+				case 'uint16_vec3': {
+					listener(event, new Vector3(rawValue.getUint16(0), rawValue.getUint16(2), rawValue.getUint16(4)));
+					break;
+				}
+				case 'int32': {
+					listener(event, rawValue.getInt32(0));
+					break;
+				}
+				case 'uint32': {
+					listener(event, rawValue.getUint32(0));
+					break;
+				}
+				case 'int32_vec3': {
+					listener(event, new Vector3(rawValue.getInt32(0), rawValue.getInt32(4), rawValue.getInt32(8)));
+					break;
+				}
+				case 'uint32_vec3': {
+					listener(event, new Vector3(rawValue.getUint32(0), rawValue.getUint32(4), rawValue.getUint32(8)));
+					break;
+				}
+				case 'int64': {
+					listener(event, rawValue.getBigInt64(0));
+					break;
+				}
+				case 'uint64': {
+					listener(event, rawValue.getBigUint64(0));
+					break;
+				}
+				case 'int64_vec3': {
+					listener(event, new Vector3<BigInt>(rawValue.getBigInt64(0), rawValue.getBigInt64(8), rawValue.getBigInt64(16)));
+					break;
+				}
+				case 'uint64_vec3': {
+					listener(event, new Vector3<BigInt>(rawValue.getBigUint64(0), rawValue.getBigUint64(8), rawValue.getBigUint64(16)));
+					break;
+				}
+				case 'float32': {
+					listener(event, rawValue.getFloat32(0));
+					break;
+				}
+				case 'float64': {
+					listener(event, rawValue.getFloat64(0));
+					break;
+				}
+				case 'float32_vec3': {
+					listener(event, new Vector3(rawValue.getFloat32(0), rawValue.getFloat32(4), rawValue.getFloat32(8)));
+					break;
+				}
+				case 'float64_vec3': {
+					listener(event, new Vector3(rawValue.getFloat64(0), rawValue.getFloat64(8), rawValue.getFloat64(16)));
+					break;
+				}
+				default: {
+					throw new InvalidInputError(`Data type "${this.connectionConfig.services.dataService!.characteristics[sensorName]!.dataType}" is not valid data type.`);
+				}
+			}
+		}
+
+		await this.subscribeCharacteristicNotification(this.connectionConfig.services.dataService!.uuid, this.connectionConfig.services.dataService!.characteristics[sensorName]!.uuid, this.notificationEventListeners[handler]!);
+
+		return handler;
+	}
+
+	/**
+	 * センサーデータのNotificationの購読を終了する。
+	 * @param sensorName Notification購読対象のセンサーデータの名称
+	 * @param handler サブスクライブ関数の返り値のハンドラー変数
+	 */
+	public async unsubscribeSensorData(sensorName: string, handler: number): Promise<void> {
+		if (this.connectionConfig.services.dataService == undefined) throw new NotSupportedError('Data Service is not supported on the connected device.');
+		else if (!Object.keys(this.connectionConfig.services.dataService!.characteristics).includes(sensorName)) throw new InvalidInputError(`Non-existent sensor "${sensorName}" specified.`);
+
+		await this.unsubscribeCharacteristicNotification(this.connectionConfig.services.dataService!.uuid, this.connectionConfig.services.dataService!.characteristics[sensorName]!.uuid, this.notificationEventListeners[handler]!);
+
+		this.notificationEventListeners[handler] = null;
 	}
 }
 

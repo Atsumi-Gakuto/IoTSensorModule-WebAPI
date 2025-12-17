@@ -1,6 +1,11 @@
 import { IoTSensorModuleAPI } from '../../dist/iot_sensor_module_api.mjs';
 
 /**
+ * Data ServiceのNotificationイベントハンドラーの格納用オブジェクト
+ */
+const dataServiceNotificationEventHandlers = {};
+
+/**
  * センサーでた情報の表にデータを追加する。
  * @param name センサー名。有効なセンサー名かどうかのチェックは行わない。
  * @param data センサーから取得したデータ
@@ -135,6 +140,7 @@ async function init() {
 				}
 				catch (error) {
 					//TODO: エラーを見やすく表示
+					document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
 					throw error;
 				}
 				pushSensorData(sensorDataName, sensorData, connectionConfig.services.dataService.characteristics[sensorDataName].unit);
@@ -145,8 +151,34 @@ async function init() {
 			const dataServiceSubscribeButtonCellElement = document.createElement('td');
 			const dataServiceSubscribeButtonElement = document.createElement('input');
 			dataServiceSubscribeButtonElement.type = 'checkbox';
-			dataServiceSubscribeButtonElement.classList.add('connection_only_control')
+			dataServiceSubscribeButtonElement.classList.add('connection_only_control', 'notification_checkbox')
 			dataServiceSubscribeButtonElement.disabled = true
+			dataServiceSubscribeButtonElement.addEventListener('change', async () => {
+				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
+
+				if (dataServiceSubscribeButtonElement.checked) {
+					try {
+						dataServiceNotificationEventHandlers[sensorDataName] = await api.subscribeSensorData(sensorDataName, (event, value) => pushSensorData(sensorDataName, value, connectionConfig.services.dataService.characteristics[sensorDataName].unit));
+					}
+					catch (error) {
+						//TODO: エラーを見やすく表示
+						document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+						throw error;
+					}
+				}
+				else {
+					console.log("A");
+					try {
+						await api.unsubscribeSensorData(sensorDataName, dataServiceNotificationEventHandlers[sensorDataName]);
+					}
+					catch (error) {
+						//TODO: エラーを見やすく表示
+						document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+						throw error;
+					}
+				}
+				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+			});
 			dataServiceSubscribeButtonCellElement.append(dataServiceSubscribeButtonElement);
 			tableRowElement.append(dataServiceSubscribeButtonCellElement);
 		}
@@ -161,7 +193,7 @@ async function init() {
 			const logServiceSubscribeButtonCellElement = document.createElement('td');
 			const logServiceSubscribeButtonElement = document.createElement('input');
 			logServiceSubscribeButtonElement.type = 'checkbox';
-			logServiceSubscribeButtonElement.classList.add('connection_only_control')
+			logServiceSubscribeButtonElement.classList.add('connection_only_control', 'notification_checkbox')
 			logServiceSubscribeButtonElement.disabled = true
 			logServiceSubscribeButtonCellElement.append(logServiceSubscribeButtonElement);
 			tableRowElement.append(logServiceSubscribeButtonCellElement);
@@ -203,6 +235,7 @@ async function init() {
 			connectButton.disabled = false;
 			disconnectButton.disabled = true;
 			document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
+			document.querySelectorAll('.notification_checkbox').forEach((element) => element.checked = false);
 		});
 	}
 }
