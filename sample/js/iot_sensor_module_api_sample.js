@@ -70,25 +70,70 @@ async function init() {
 	}
 
 	// センサーデータ取得コントロールの表
+	const hasDataService = connectionConfig.services.dataService != undefined;
+	if(hasDataService) {
+		const dataServiceLabelElement = document.createElement('th');
+		dataServiceLabelElement.innerText = 'Data Service';
+		dataServiceLabelElement.colSpan = 2;
+		document.getElementById('tr_sensor_data_control_header_1').append(dataServiceLabelElement);
+		const readLabelElement = document.createElement('th');
+		readLabelElement.innerText = 'Read';
+		document.getElementById('tr_sensor_data_control_header_2').append(readLabelElement);
+		const subscribeLabelElement = document.createElement('th');
+		subscribeLabelElement.innerText = 'Subscribe';
+		document.getElementById('tr_sensor_data_control_header_2').append(subscribeLabelElement);
+	}
+	const hasLogService = connectionConfig.services.logService != undefined;
+	if(hasLogService) {
+		const logServiceLabelElement = document.createElement('th');
+		logServiceLabelElement.innerText = 'Log Service';
+		logServiceLabelElement.colSpan = 2;
+		document.getElementById('tr_sensor_data_control_header_1').append(logServiceLabelElement);
+		const readLabelElement = document.createElement('th');
+		readLabelElement.innerText = 'Read';
+		document.getElementById('tr_sensor_data_control_header_2').append(readLabelElement);
+		const subscribeLabelElement = document.createElement('th');
+		subscribeLabelElement.innerText = 'Subscribe';
+		document.getElementById('tr_sensor_data_control_header_2').append(subscribeLabelElement);
+	}
 	for(const sensorDataName in connectionConfig.services.dataService.characteristics) {
 		const tableRowElement = document.createElement('tr');
 		const sensorDataNameElement = document.createElement('td');
 		sensorDataNameElement.innerText = sensorDataName;
 		tableRowElement.append(sensorDataNameElement);
-		const getDataButtonCellElement = document.createElement('td');
-		const getDataButtonElement = document.createElement('button');
-		getDataButtonElement.innerText = '取得';
-		getDataButtonElement.classList.add('connection_only_control')
-		getDataButtonElement.disabled = true
-		getDataButtonCellElement.append(getDataButtonElement);
-		tableRowElement.append(getDataButtonCellElement);
-		const subscribeButtonCellElement = document.createElement('td');
-		const subscribeButtonElement = document.createElement('input');
-		subscribeButtonElement.type = 'checkbox';
-		subscribeButtonElement.classList.add('connection_only_control')
-		subscribeButtonElement.disabled = true
-		subscribeButtonCellElement.append(subscribeButtonElement);
-		tableRowElement.append(subscribeButtonCellElement);
+		if(hasDataService) {
+			const dataServiceGetDataButtonCellElement = document.createElement('td');
+			const dataServiceGetDataButtonElement = document.createElement('button');
+			dataServiceGetDataButtonElement.innerText = '取得';
+			dataServiceGetDataButtonElement.classList.add('connection_only_control')
+			dataServiceGetDataButtonElement.disabled = true
+			dataServiceGetDataButtonCellElement.append(dataServiceGetDataButtonElement);
+			tableRowElement.append(dataServiceGetDataButtonCellElement);
+			const dataServiceSubscribeButtonCellElement = document.createElement('td');
+			const dataServiceSubscribeButtonElement = document.createElement('input');
+			dataServiceSubscribeButtonElement.type = 'checkbox';
+			dataServiceSubscribeButtonElement.classList.add('connection_only_control')
+			dataServiceSubscribeButtonElement.disabled = true
+			dataServiceSubscribeButtonCellElement.append(dataServiceSubscribeButtonElement);
+			tableRowElement.append(dataServiceSubscribeButtonCellElement);
+		}
+		if(hasLogService) {
+			const logServiceGetDataButtonCellElement = document.createElement('td');
+			const logServiceGetDataButtonElement = document.createElement('button');
+			logServiceGetDataButtonElement.innerText = '取得';
+			logServiceGetDataButtonElement.classList.add('connection_only_control')
+			logServiceGetDataButtonElement.disabled = true
+			logServiceGetDataButtonCellElement.append(logServiceGetDataButtonElement);
+			tableRowElement.append(logServiceGetDataButtonCellElement);
+			const logServiceSubscribeButtonCellElement = document.createElement('td');
+			const logServiceSubscribeButtonElement = document.createElement('input');
+			logServiceSubscribeButtonElement.type = 'checkbox';
+			logServiceSubscribeButtonElement.classList.add('connection_only_control')
+			logServiceSubscribeButtonElement.disabled = true
+			logServiceSubscribeButtonCellElement.append(logServiceSubscribeButtonElement);
+			tableRowElement.append(logServiceSubscribeButtonCellElement);
+		}
+
 		document.getElementById('table_sensor_data_control').append(tableRowElement);
 	}
 
