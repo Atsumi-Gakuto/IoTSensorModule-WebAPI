@@ -23,23 +23,27 @@
 			</tr>
 		</table>
 
-		<h3>センサーデータ情報</h3>
-		<table id="table_sensor_data">
-			<tr>
-				<th>取得日時</th>
-				<th>データ名</th>
-				<th>データ値</th>
-			</tr>
-		</table>
+		<div id="data_service_area">
+			<h3>センサーデータ情報</h3>
+			<table id="table_sensor_data">
+				<tr>
+					<th>取得日時</th>
+					<th>データ名</th>
+					<th>データ値</th>
+				</tr>
+			</table>
+		</div>
 
-		<h3>センサーログ情報</h3>
-		<table id="table_sensor_log">
-			<tr>
-				<th>取得日時</th>
-				<th>データ名</th>
-				<th>データ値</th>
-			</tr>
-		</table>
+		<div id="log_service_area">
+			<h3>センサーログ情報</h3>
+			<table id="table_sensor_log">
+				<tr>
+					<th>取得日時</th>
+					<th>データ名</th>
+					<th>データ値</th>
+				</tr>
+			</table>
+		</div>
 
 		<h3>コントロール</h3>
 		<button id="button_start_advertise_observe" disabled>トリガーデータ監視</button>
@@ -54,5 +58,13 @@
 			<tr id="tr_sensor_data_control_header_2">
 			</tr>
 		</table>
+
+		<h3>IoTセンサモジュール設定コントロール</h3>
+		<div id="system_service_area">
+			<h4>System Service</h4>
+			<h5>動作モード</h5>
+			<input type="radio" id="input_radio_system_service_operation_mode_user_mode" name="input_radio_system_service_operation_mode" class="connection_only_control" value="user_mode" checked disabled> <label for="input_radio_system_service_operation_mode_user_mode">User Mode (設定ロック)</label>
+			<input type="radio" id="input_radio_system_service_operation_mode_configuration_mode" name="input_radio_system_service_operation_mode" class="connection_only_control" value="configuration_mode" disabled> <label for="input_radio_system_service_operation_mode_configuration_mode">Configuration Mode (設定ロック解除)</label>
+		</div>
 	</body>
 </html>

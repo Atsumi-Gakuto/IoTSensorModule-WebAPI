@@ -22,3 +22,8 @@ ol {
 .message_ng {
 	color: red;
 }
+
+/* ユーティリティクラス */
+.hidden {
+	display: none;
+}

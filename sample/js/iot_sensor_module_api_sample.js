@@ -139,6 +139,10 @@ async function init() {
 		subscribeLabelElement.innerText = 'Subscribe';
 		document.getElementById('tr_sensor_data_control_header_2').append(subscribeLabelElement);
 	}
+	else {
+		document.getElementById('data_service_area').classList.add('hidden');
+	}
+
 	const hasLogService = connectionConfig.services.logService != undefined;
 	if (hasLogService) {
 		const logServiceLabelElement = document.createElement('th');
@@ -152,6 +156,10 @@ async function init() {
 		subscribeLabelElement.innerText = 'Subscribe';
 		document.getElementById('tr_sensor_data_control_header_2').append(subscribeLabelElement);
 	}
+	else {
+		document.getElementById('log_service_area').classList.add('hidden');
+	}
+
 	for (const sensorDataName in connectionConfig.services.dataService.characteristics) {
 		const tableRowElement = document.createElement('tr');
 		const sensorDataNameElement = document.createElement('td');
@@ -286,6 +294,53 @@ async function init() {
 		const disconnectButton = document.getElementById('button_disconnect');
 		disconnectButton.addEventListener('click', async () => api.disconnect());
 
+		// System Service
+		if (connectionConfig.services.systemService != undefined) {
+			document.getElementById('input_radio_system_service_operation_mode_user_mode').addEventListener('change', async () => {
+				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
+				let response;
+				try {
+					response = await api.setOperationMode(0);
+				}
+				catch (error) {
+					document.getElementById('input_radio_system_service_operation_mode_configuration_mode').checked = true;
+					//TODO: エラーを見やすく表示
+					document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+					throw error;
+				}
+				if (response > 0) {
+					document.getElementById('input_radio_system_service_operation_mode_configuration_mode').checked = true;
+					//TODO: エラーを見やすく表示
+					document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+					throw new Error(`Operation failed. Response code: ${response}`);
+				}
+				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+			});
+			document.getElementById('input_radio_system_service_operation_mode_configuration_mode').addEventListener('change', async () => {
+				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
+				let response;
+				try {
+					response = await api.setOperationMode(1);
+				}
+				catch (error) {
+					document.getElementById('input_radio_system_service_operation_mode_user_mode').checked = true;
+					//TODO: エラーを見やすく表示
+					document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+					throw error;
+				}
+				if (response > 0) {
+					document.getElementById('input_radio_system_service_operation_mode_user_mode').checked = true;
+					//TODO: エラーを見やすく表示
+					document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+					throw new Error(`Operation failed. Response code: ${response}`);
+				}
+				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+			});
+		}
+		else {
+			document.getElementById('system_service_area').classList.add('hidden');
+		}
+
 		// イベント登録
 		api.addEventListener('trigger-data-received', () => {
 			document.getElementById('message_last_trigger_timestamp').innerText = new Date(api.getLastTriggerTimestamp()).toLocaleString();
@@ -305,6 +360,7 @@ async function init() {
 			disconnectButton.disabled = true;
 			document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
 			document.querySelectorAll('.notification_checkbox').forEach((element) => element.checked = false);
+			document.getElementById('input_radio_system_service_operation_mode_user_mode').checked = true;
 		});
 	}
 }

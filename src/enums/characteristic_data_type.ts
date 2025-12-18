@@ -1,0 +1,2 @@
+export const CHARACTERISTIC_DATA_TYPE = ['int8', 'uint8', 'int8_vec3', 'uint8_vec3', 'int16', 'uint16', 'int16_vec3', 'uint16_vec3', 'int32', 'uint32', 'int32_vec3', 'uint32_vec3', 'int64', 'uint64', 'int64_vec3', 'uint64_vec3', 'float32', 'float32_vec3', 'float64', 'float64_vec3'] as const;
+export type CharacteristicDataType = typeof CHARACTERISTIC_DATA_TYPE[number];

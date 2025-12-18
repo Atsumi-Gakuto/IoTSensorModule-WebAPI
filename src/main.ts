@@ -1,12 +1,14 @@
 import { IoTSensorModuleConnectionConfig } from "./interfaces/iot_sensor_module_connection_config";
 import { IoTSensorModuleService } from "./interfaces/iot_sensor_module_service";
 import { IoTSensorModuleCharacteristic } from "./interfaces/iot_sensor_module_characteristics";
-import { IOT_SENSOR_MODULE_CHARACTERISTIC_DATA_TYPE } from "./types/iot_sensor_module_characteristic_data_type";
+import { CHARACTERISTIC_DATA_TYPE } from "./enums/characteristic_data_type";
 import { InvalidInputError } from "./errors/invalid_input_error";
 import { NotSupportedError } from "./errors/not_supported_error";
 import { TriggerOverflowError } from "./errors/trigger_overflow_error";
 import { InvalidStateError } from "./errors/invalid_state_error";
 import { Vector3 } from "./interfaces/vector3";
+import { OperationResult } from "./enums/operation_result";
+import { OPERATION_MODE, OperationMode } from "./enums/operation_mode";
 
 /**
  * Web Bluetoothを用いてIoTセンサモジュールを操作できるようになるWebAPI
@@ -93,11 +95,11 @@ export class IoTSensorModuleAPI extends EventTarget {
 				switch (serviceName) {
 					case 'dataService':
 						if (typeof characteristic.dataType != 'string') throw new InvalidInputError(`The field "dataType" of characteristic "${characteristicName}" in service "${serviceName}" must be provided as a IoTSensorModuleCharacteristicDataType.`);
-						else if (!IOT_SENSOR_MODULE_CHARACTERISTIC_DATA_TYPE.includes(characteristic.dataType)) throw new InvalidInputError(`The field "dataType" of characteristic "${characteristicName}" in service "${serviceName}" is not a valid IoTSensorModuleCharacteristicDataType.`);
+						else if (!CHARACTERISTIC_DATA_TYPE.includes(characteristic.dataType)) throw new InvalidInputError(`The field "dataType" of characteristic "${characteristicName}" in service "${serviceName}" is not a valid IoTSensorModuleCharacteristicDataType.`);
 						break;
 					case 'logService':
 						if (typeof characteristic.dataType != 'string') throw new InvalidInputError(`The field "dataType" of characteristic "${characteristicName}" in service "${serviceName}" must be provided as a IoTSensorModuleCharacteristicDataType.`);
-						else if (!IOT_SENSOR_MODULE_CHARACTERISTIC_DATA_TYPE.includes(characteristic.dataType)) throw new InvalidInputError(`The field "dataType" of characteristic "${characteristicName}" in service "${serviceName}" is not a valid IoTSensorModuleCharacteristicDataType.`);
+						else if (!CHARACTERISTIC_DATA_TYPE.includes(characteristic.dataType)) throw new InvalidInputError(`The field "dataType" of characteristic "${characteristicName}" in service "${serviceName}" is not a valid IoTSensorModuleCharacteristicDataType.`);
 						else if (typeof characteristic.logCount != 'number') throw new InvalidInputError(`The field "logCount" of characteristic "${characteristicName}" in service "${serviceName}" must be provided as a number.`);
 						else if (characteristic.logCount < 1) throw new InvalidInputError(`The field "logCount" of characteristic "${characteristicName}" in service "${serviceName}" must be greater than or equal to 1.`);
 						break;
@@ -279,9 +281,29 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 */
 	private async readCharacteristicValue(serviceUuid: string, characteristicUuid: string): Promise<DataView<ArrayBufferLike>> {
 		if (this.connectedDevice == null) throw new InvalidStateError('No device is connected.');
-		else if (this.connectedDevice.gatt == null) throw new InvalidStateError('GATT server not found on the selected device.');
+		else if (this.connectedDevice.gatt == null) throw new InvalidStateError('No GATT server found on the selected device.');
+
 		const rawValue: DataView<ArrayBufferLike> = await (await (await this.connectedDevice.gatt!.getPrimaryService(serviceUuid)).getCharacteristic(characteristicUuid)).readValue()
+
 		return rawValue;
+	}
+
+	/**
+	 * 接続したIoTセンサモジュール内のGATTサーバー上の指定したキャラクタリスティックへデータを書き込む。
+	 * @param serviceUuid データ書き込み対象のキャラクタリスティックが含まれるサービスのUUID
+	 * @param characteristicUuid データ書き込み対象のキャラクタリスティックのUUID
+	 * @param responseCharacteristicUuid 応答コードが格納されるキャラクタリスティックのUUID
+	 * @returns IoTセンサモジュールが返した応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws Error データの書き込み時に通信エラーが発生した場合に投げられる。
+	 */
+	private async writeCharacteristicValue(serviceUuid: string, characteristicUuid: string, responseCharacteristicUuid: string, value: Uint8Array): Promise<OperationResult> {
+		if (this.connectedDevice == null) throw new InvalidStateError('No device is connected.');
+		else if (this.connectedDevice.gatt == null) throw new InvalidStateError('No GATT server found on the selected device.');
+
+		await (await (await this.connectedDevice.gatt!.getPrimaryService(serviceUuid)).getCharacteristic(characteristicUuid)).writeValue(new Uint8Array(value));
+
+		return (await this.readCharacteristicValue(serviceUuid, responseCharacteristicUuid)).getUint8(0) as OperationResult;
 	}
 
 	/**
@@ -322,6 +344,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * DataServiceからセンサーデータを読み出す。
 	 * @param sensorName 読み出し対象のセンサーデータの名称
 	 * @returns 読み出されたセンサーデータ。センサーのデーターフォーマットに応じて整形された値が返される。単なるnumber型か3つの値が1セットになったVector3型か判別する必要がある。
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがDataServiceをサポートしていない場合に投げられる。
 	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
 	 * @throws Error データの読み出し時に通信エラーが発生した場合に投げられる。
@@ -424,6 +447,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @param listener.event Notification受信時に渡されるイベントオブジェクト（characteristicvaluechanged）
 	 * @param listener.value Notification受信時に渡されるセンサーデータ。センサーのデーターフォーマットに応じて整形された値が渡される。単なるnumber型か3つの値が1セットになったVector3型か判別する必要がある。
 	 * @returns 登録したNotification購読イベントハンドラーの識別子。アンサブスクライブするときに必要。
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがDataServiceをサポートしていない場合に投げられる。
 	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
 	 * @throws Error Notification購読処理中の通信エラーが発生した場合に投げられる。
@@ -551,6 +575,10 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * センサーデータのNotificationの購読を終了する。
 	 * @param sensorName Notification購読対象のセンサーデータの名称
 	 * @param handler サブスクライブ関数の返り値のハンドラー変数
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがDataServiceをサポートしていない場合に投げられる。
+	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
+	 * @throws Error Notification購読処理中の通信エラーが発生した場合に投げられる。
 	 */
 	public async unsubscribeSensorData(sensorName: string, handler: number): Promise<void> {
 		if (this.connectionConfig.services.dataService == undefined) throw new NotSupportedError('Data Service is not supported on the connected device.');
@@ -566,6 +594,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * LogServiceからセンサーログを読み出す。
 	 * @param sensorName 読み出し対象のセンサーデータの名称
 	 * @returns 読み出されたセンサーログが配列の形で返される。インデックス番号が若いほど新しいデータになる。各要素はセンサーのデーターフォーマットに応じて整形されている。単なるnumber型か3つの値が1セットになったVector3型か判別する必要がある。
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがLogServiceをサポートしていない場合に投げられる。
 	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
 	 * @throws Error ログの読み出し時に通信エラーが発生した場合に投げられる。
@@ -708,6 +737,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @param listener.event Notification受信時に渡されるイベントオブジェクト（characteristicvaluechanged）
 	 * @param listener.value Notification受信時のセンサーログが配列の形で返される。インデックス番号が若いほど新しいデータになる。各要素はセンサーのデーターフォーマットに応じて整形されている。単なるnumber型か3つの値が1セットになったVector3型か判別する必要がある。
 	 * @returns 登録したNotification購読イベントハンドラーの識別子。アンサブスクライブするときに必要。
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがLogServiceをサポートしていない場合に投げられる。
 	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
 	 * @throws Error Notification購読処理中の通信エラーが発生した場合に投げられる。
@@ -875,6 +905,10 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * センサーログのNotificationの購読を終了する。
 	 * @param sensorName Notification購読対象のセンサーデータの名称
 	 * @param handler サブスクライブ関数の返り値のハンドラー変数
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがLogServiceをサポートしていない場合に投げられる。
+	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
+	 * @throws Error Notification購読終了処理中の通信エラーが発生した場合に投げられる。
 	 */
 	public async unsubscribeSensorLog(sensorName: string, handler: number): Promise<void> {
 		if (this.connectionConfig.services.logService == undefined) throw new NotSupportedError('Log Service is not supported on the connected device.');
@@ -884,6 +918,18 @@ export class IoTSensorModuleAPI extends EventTarget {
 		console.info('Sensor log subscription stopped.');
 
 		this.notificationEventListeners[handler] = null;
+	}
+
+	/**
+	 * IoTセンサモジュールの動作モードを切り替える。
+	 * @param mode 新たなIoTセンサモジュールの動作モード
+	 * @return IoTセンサモジュールから返された応答コード
+	 */
+	public async setOperationMode(mode: OperationMode): Promise<OperationResult> {
+		if (this.connectionConfig.services.systemService == undefined) throw new NotSupportedError('System Service is not supported on the connected device.');
+		else if (!Object.values(OPERATION_MODE).includes(mode)) throw new InvalidInputError(`Operation mode "${mode}" is not valid operation mode.`);
+
+		return await this.writeCharacteristicValue(this.connectionConfig.services.systemService!.uuid, this.connectionConfig.services.systemService!.characteristics.mode!.uuid, this.connectionConfig.services.systemService!.characteristics.response!.uuid, new Uint8Array([mode]));
 	}
 }
 
