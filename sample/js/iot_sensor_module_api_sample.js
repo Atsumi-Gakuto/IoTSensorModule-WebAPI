@@ -418,7 +418,7 @@ async function init() {
 			disconnectButton.disabled = true;
 			setControlsEnabled(false);
 			document.querySelectorAll('.notification_checkbox').forEach((element) => element.checked = false);
-			document.querySelectorAll('.configuration_value').forEach((element) => element.innerText = '未取得');
+			document.querySelectorAll('.configuration_value').forEach((element) => element.innerText = '---');
 			document.getElementById('input_radio_system_service_operation_mode_user_mode').checked = true;
 		});
 	}

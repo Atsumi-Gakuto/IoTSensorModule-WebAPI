@@ -87,7 +87,7 @@
 					</td>
 					<td>
 						<div class="flex_row">
-							<span id="value_system_service_operation_mode" class="configuration_value">未取得</span>
+							<span id="value_system_service_operation_mode" class="configuration_value">---</span>
 							<button id="button_system_service_get_operation_mode" class="connection_only_control" disabled>取得</button>
 						</div>
 					</td>
@@ -97,8 +97,43 @@
 					<td></td>
 					<td>
 						<div class="flex_row">
-							<span id="value_system_service_response" class="configuration_value">未取得</span>
+							<span id="value_system_service_response" class="configuration_value">---</span>
 							<button id="button_system_service_get_response" class="connection_only_control" disabled>取得</button>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<div id="sensor_service_area">
+			<table>
+				<h4>Sensor Service</h4>
+				<tr>
+					<th>項目</th>
+					<th>設定入力</th>
+					<th>現在値</th>
+				</tr>
+				<tr>
+					<td>Sensor Interval</td>
+					<td>
+						<div class="flex_column">
+							<div class="flex_row">
+								<div class="flex_column">
+									<p>最小: <input id="input_sensor_service_adv_interval_min" class="connection_only_control" type="number" min="20" step="0.0625" max="10240" disabled> ms</p>
+									<p>最大: <input id="input_sensor_service_adv_interval_max" class="connection_only_control" type="number" min="20" step="0.0625" max="10240" disabled> ms</p>
+								</div>
+								<button id="button_sensor_service_set_adv_interval" class="connection_only_control" disabled>変更</button>
+							</div>
+							<p id="message_sensor_service_adv_interval" class="message_ng">エラ〜メッセイージ</p>
+						</div>
+					</td>
+					<td>
+						<div class="flex_row">
+							<div class="flex_column">
+								<p>最小: <span id="value_sensor_service_adv_interval_min" class="configuration_value">---</span> ms</p>
+								<p>最大: <span id="value_sensor_service_adv_interval_max" class="configuration_value">---</span> ms</p>
+							</div>
+							<button id="button_sensor_service_get_adv_interval" class="connection_only_control" disabled>取得</button>
 						</div>
 					</td>
 				</tr>
