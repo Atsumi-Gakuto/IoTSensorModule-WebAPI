@@ -929,7 +929,6 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 */
 	public async getOperationMode(): Promise<OperationMode> {
 		if (this.connectionConfig.services.systemService == undefined) throw new NotSupportedError('System Service is not supported on the connected device.');
-
 		return (await this.readCharacteristicValue(this.connectionConfig.services.systemService!.uuid, this.connectionConfig.services.systemService!.characteristics.mode!.uuid)).getUint8(0) as OperationMode;
 	}
 

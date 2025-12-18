@@ -62,9 +62,47 @@
 		<h3>IoTセンサモジュール設定コントロール</h3>
 		<div id="system_service_area">
 			<h4>System Service</h4>
-			<h5>動作モード</h5>
-			<input type="radio" id="input_radio_system_service_operation_mode_user_mode" name="input_radio_system_service_operation_mode" class="connection_only_control" value="user_mode" checked disabled> <label for="input_radio_system_service_operation_mode_user_mode">User Mode (設定ロック)</label>
-			<input type="radio" id="input_radio_system_service_operation_mode_configuration_mode" name="input_radio_system_service_operation_mode" class="connection_only_control" value="configuration_mode" disabled> <label for="input_radio_system_service_operation_mode_configuration_mode">Configuration Mode (設定ロック解除)</label>
+			<table>
+				<tr>
+					<th>項目</th>
+					<th>設定入力</th>
+					<th>現在値</th>
+				</tr>
+				<tr>
+					<td>Operation Mode</td>
+					<td>
+						<div class="flex_row">
+							<div class="flex_column">
+								<div>
+									<input type="radio" id="input_radio_system_service_operation_mode_user_mode" name="input_radio_system_service_operation_mode" class="connection_only_control" value="0" checked disabled>
+									<label for="input_radio_system_service_operation_mode_user_mode">User Mode</label>
+								</div>
+								<div>
+									<input type="radio" id="input_radio_system_service_operation_mode_configuration_mode" name="input_radio_system_service_operation_mode" class="connection_only_control" value="1" disabled>
+									<label for="input_radio_system_service_operation_mode_configuration_mode">Configuration Mode</label>
+								</div>
+							</div>
+							<button id="button_system_service_set_operation_mode" class="connection_only_control" disabled>変更</button>
+						</div>
+					</td>
+					<td>
+						<div class="flex_row">
+							<span id="value_system_service_operation_mode" class="configuration_value">未取得</span>
+							<button id="button_system_service_get_operation_mode" class="connection_only_control" disabled>取得</button>
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td>Response</td>
+					<td></td>
+					<td>
+						<div class="flex_row">
+							<span id="value_system_service_response" class="configuration_value">未取得</span>
+							<button id="button_system_service_get_response" class="connection_only_control" disabled>取得</button>
+						</div>
+					</td>
+				</tr>
+			</table>
 		</div>
 	</body>
 </html>

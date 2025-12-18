@@ -1,14 +1,31 @@
 import { IoTSensorModuleAPI } from '../../dist/iot_sensor_module_api.mjs';
 
 /**
+ * IoTセンサモジュールAPIインスタンス
+ * @type {IoTSensorModuleAPI}
+ */
+let api;
+
+/**
  * Data ServiceのNotificationイベントハンドラーの格納用オブジェクト
+ * @type {Object<string,Function>}
  */
 const dataServiceNotificationEventHandlers = {};
 
 /**
  * Log ServiceのNotificationイベントハンドラーの格納用オブジェクト
+ * @type {Object<string,Function>}
  */
 const logServiceNotificationEventHandlers = {};
+
+/**
+ * IoTセンサモジュールからのデータ取得や操作のボタンを一括で有効/無効にする。
+ * @param {boolean} isEnabled 有効にする場合はtrue、無効にする場合はfalse
+ */
+function setControlsEnabled(isEnabled) {
+	if (isEnabled) document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+	else document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
+}
 
 /**
  * センサーデータ情報の表にデータを追加する。
@@ -57,6 +74,61 @@ function pushSensorLog(name, data, unit) {
 }
 
 /**
+ * 応答コードのテキストを返す。
+ * @param {number} code 応答コード
+ * @return {string} 応答コードのテキスト
+ */
+function getStatusCodeText(code) {
+	const codeText = [
+		'OPERATION_SUCCEEDED',
+		'OPERATION_FAILED',
+		'INVALID_INPUT',
+		'NOT_PERMITTED',
+		'MALLOC_FAILED',
+		'NOT_IMPLEMENTED'
+	]
+	return codeText[code];
+}
+
+/**
+ * IoTセンサモジュールの動作モードを取得して表示する。
+ */
+async function getOperationMode() {
+	setControlsEnabled(false);
+
+	let mode;
+	try {
+		mode = await api.getOperationMode();
+	}
+	catch (error) {
+		//TODO: エラーを見やすく表示
+		setControlsEnabled(true);
+		throw error;
+	}
+	document.getElementById('value_system_service_operation_mode').innerText = mode == 0 ? 'User Mode' : 'Configuration Mode';
+	setControlsEnabled(true);
+}
+
+/**
+ * System Serviceからの応答コードを取得して表示する。
+ */
+async function getSystemServiceResponse() {
+	setControlsEnabled(false);
+
+	let response;
+	try {
+		response = await api.getSystemServiceResponse();
+	}
+	catch (error) {
+		//TODO: エラーを見やすく表示
+		setControlsEnabled(true);
+		throw error;
+	}
+	document.getElementById('value_system_service_response').innerText = getStatusCodeText(response);
+	setControlsEnabled(true);
+}
+
+/**
  * 初期化関数
  */
 async function init() {
@@ -85,7 +157,6 @@ async function init() {
 	connectionInfoElement.classList.add('message_ok');
 
 	// IoTセンサモジュールAPIの初期化
-	let api;
 	try {
 		api = new IoTSensorModuleAPI(connectionConfig);
 	}
@@ -172,18 +243,18 @@ async function init() {
 			dataServiceGetDataButtonElement.classList.add('connection_only_control')
 			dataServiceGetDataButtonElement.disabled = true
 			dataServiceGetDataButtonElement.addEventListener('click', async () => {
-				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
+				setControlsEnabled(false);
 				let sensorData;
 				try {
 					sensorData = await api.getSensorData(sensorDataName);
 				}
 				catch (error) {
 					//TODO: エラーを見やすく表示
-					document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+					setControlsEnabled(true);
 					throw error;
 				}
 				pushSensorData(sensorDataName, sensorData, connectionConfig.services.dataService.characteristics[sensorDataName].unit);
-				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+				setControlsEnabled(true);
 			});
 			dataServiceGetDataButtonCellElement.append(dataServiceGetDataButtonElement);
 			tableRowElement.append(dataServiceGetDataButtonCellElement);
@@ -193,7 +264,7 @@ async function init() {
 			dataServiceSubscribeButtonElement.classList.add('connection_only_control', 'notification_checkbox')
 			dataServiceSubscribeButtonElement.disabled = true
 			dataServiceSubscribeButtonElement.addEventListener('change', async () => {
-				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
+				setControlsEnabled(false);
 
 				if (dataServiceSubscribeButtonElement.checked) {
 					try {
@@ -201,7 +272,7 @@ async function init() {
 					}
 					catch (error) {
 						//TODO: エラーを見やすく表示
-						document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+						setControlsEnabled(true);
 						throw error;
 					}
 				}
@@ -211,11 +282,11 @@ async function init() {
 					}
 					catch (error) {
 						//TODO: エラーを見やすく表示
-						document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+						setControlsEnabled(true);
 						throw error;
 					}
 				}
-				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+				setControlsEnabled(true);
 			});
 			dataServiceSubscribeButtonCellElement.append(dataServiceSubscribeButtonElement);
 			tableRowElement.append(dataServiceSubscribeButtonCellElement);
@@ -227,18 +298,18 @@ async function init() {
 			logServiceGetDataButtonElement.classList.add('connection_only_control')
 			logServiceGetDataButtonElement.disabled = true
 			logServiceGetDataButtonElement.addEventListener('click', async () => {
-				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
+				setControlsEnabled(false);
 				let sensorLog;
 				try {
 					sensorLog = await api.readSensorLog(sensorDataName);
 				}
 				catch (error) {
 					//TODO: エラーを見やすく表示
-					document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+					setControlsEnabled(true);
 					throw error;
 				}
 				pushSensorLog(sensorDataName, sensorLog, connectionConfig.services.logService.characteristics[sensorDataName].unit);
-				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+				setControlsEnabled(true);
 			});
 			logServiceGetDataButtonCellElement.append(logServiceGetDataButtonElement);
 			tableRowElement.append(logServiceGetDataButtonCellElement);
@@ -248,7 +319,7 @@ async function init() {
 			logServiceSubscribeButtonElement.classList.add('connection_only_control', 'notification_checkbox')
 			logServiceSubscribeButtonElement.disabled = true
 			logServiceSubscribeButtonElement.addEventListener('change', async () => {
-				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
+				setControlsEnabled(false);
 
 				if (logServiceSubscribeButtonElement.checked) {
 					try {
@@ -256,7 +327,7 @@ async function init() {
 					}
 					catch (error) {
 						//TODO: エラーを見やすく表示
-						document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+						setControlsEnabled(true);
 						throw error;
 					}
 				}
@@ -266,11 +337,11 @@ async function init() {
 					}
 					catch (error) {
 						//TODO: エラーを見やすく表示
-						document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+						setControlsEnabled(true);
 						throw error;
 					}
 				}
-				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+				setControlsEnabled(true);
 			});
 			logServiceSubscribeButtonCellElement.append(logServiceSubscribeButtonElement);
 			tableRowElement.append(logServiceSubscribeButtonCellElement);
@@ -296,46 +367,31 @@ async function init() {
 
 		// System Service
 		if (connectionConfig.services.systemService != undefined) {
-			document.getElementById('input_radio_system_service_operation_mode_user_mode').addEventListener('change', async () => {
-				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
+			document.getElementById('button_system_service_set_operation_mode').addEventListener('click', async () => {
+				let selectedValue;
+				document.getElementsByName('input_radio_system_service_operation_mode').forEach((element) => {
+					if (element.checked) selectedValue = element.value;
+				});
 				let response;
 				try {
-					response = await api.setOperationMode(0);
+					response = await api.setOperationMode(Number(selectedValue));
 				}
 				catch (error) {
-					document.getElementById('input_radio_system_service_operation_mode_configuration_mode').checked = true;
 					//TODO: エラーを見やすく表示
-					document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+					setControlsEnabled(true);
 					throw error;
 				}
 				if (response > 0) {
-					document.getElementById('input_radio_system_service_operation_mode_configuration_mode').checked = true;
 					//TODO: エラーを見やすく表示
-					document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
-					throw new Error(`Operation failed. Response code: ${response}`);
+					setControlsEnabled(true);
+					throw new Error(`Operation failed. Response code: ${getStatusCodeText(response)}`);
 				}
-				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+				document.getElementById('value_system_service_operation_mode').innerText = selectedValue == 0 ? 'User Mode' : 'Configuration Mode';
+				document.getElementById('value_system_service_response').innerText = getStatusCodeText(response);
+				setControlsEnabled(true);
 			});
-			document.getElementById('input_radio_system_service_operation_mode_configuration_mode').addEventListener('change', async () => {
-				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
-				let response;
-				try {
-					response = await api.setOperationMode(1);
-				}
-				catch (error) {
-					document.getElementById('input_radio_system_service_operation_mode_user_mode').checked = true;
-					//TODO: エラーを見やすく表示
-					document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
-					throw error;
-				}
-				if (response > 0) {
-					document.getElementById('input_radio_system_service_operation_mode_user_mode').checked = true;
-					//TODO: エラーを見やすく表示
-					document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
-					throw new Error(`Operation failed. Response code: ${response}`);
-				}
-				document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
-			});
+			document.getElementById('button_system_service_get_operation_mode').addEventListener('click', async () => getOperationMode());
+			document.getElementById('button_system_service_get_response').addEventListener('click', async () => getSystemServiceResponse());
 		}
 		else {
 			document.getElementById('system_service_area').classList.add('hidden');
@@ -348,18 +404,21 @@ async function init() {
 				document.getElementById('row_trigger_data_flags').children[i].innerText = api.isTriggered(i) ? '✅' : '❌';
 			}
 		});
-		api.addEventListener('connection-established', () => {
+		api.addEventListener('connection-established', async () => {
+			if (connectionConfig.services.systemService != undefined) {
+				await getOperationMode();
+			}
 			startObserveButton.disabled = true;
 			connectButton.disabled = true;
 			disconnectButton.disabled = false;
-			document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
 		});
 		api.addEventListener('connection-closed', () => {
 			startObserveButton.disabled = false;
 			connectButton.disabled = false;
 			disconnectButton.disabled = true;
-			document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
+			setControlsEnabled(false);
 			document.querySelectorAll('.notification_checkbox').forEach((element) => element.checked = false);
+			document.querySelectorAll('.configuration_value').forEach((element) => element.innerText = '未取得');
 			document.getElementById('input_radio_system_service_operation_mode_user_mode').checked = true;
 		});
 	}

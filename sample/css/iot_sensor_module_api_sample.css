@@ -14,6 +14,21 @@ ol {
 	padding-left: 20px;
 }
 
+/* 整列 */
+.flex_column {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.flex_row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
 /* メッセージ装飾 */
 .message_ok {
 	color: green;
