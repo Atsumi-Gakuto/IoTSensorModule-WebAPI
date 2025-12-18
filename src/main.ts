@@ -921,15 +921,45 @@ export class IoTSensorModuleAPI extends EventTarget {
 	}
 
 	/**
+	 * IoTモジュールの現在の動作モードを取得する。
+	 * @return 現在の動作モード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがSystemServiceをサポートしていない場合に投げられる。
+	 * @throws Error データの読み取り時に通信エラーが発生した場合に投げられる。
+	 */
+	public async getOperationMode(): Promise<OperationMode> {
+		if (this.connectionConfig.services.systemService == undefined) throw new NotSupportedError('System Service is not supported on the connected device.');
+
+		return (await this.readCharacteristicValue(this.connectionConfig.services.systemService!.uuid, this.connectionConfig.services.systemService!.characteristics.mode!.uuid)).getUint8(0) as OperationMode;
+	}
+
+	/**
 	 * IoTセンサモジュールの動作モードを切り替える。
 	 * @param mode 新たなIoTセンサモジュールの動作モード
 	 * @return IoTセンサモジュールから返された応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがSystemServiceをサポートしていない場合に投げられる。
+	 * @throws InvalidInputError 指定した動作モードが不正な場合に投げられる。
+	 * @throws Error データの書き込み時に通信エラーが発生した場合に投げられる。
 	 */
 	public async setOperationMode(mode: OperationMode): Promise<OperationResult> {
 		if (this.connectionConfig.services.systemService == undefined) throw new NotSupportedError('System Service is not supported on the connected device.');
 		else if (!Object.values(OPERATION_MODE).includes(mode)) throw new InvalidInputError(`Operation mode "${mode}" is not valid operation mode.`);
 
 		return await this.writeCharacteristicValue(this.connectionConfig.services.systemService!.uuid, this.connectionConfig.services.systemService!.characteristics.mode!.uuid, this.connectionConfig.services.systemService!.characteristics.response!.uuid, new Uint8Array([mode]));
+	}
+
+	/**
+	 * System Serviceの応答コードを取得する。
+	 * @return IoTセンサモジュールから返された応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがSystemServiceをサポートしていない場合に投げられる。
+	 * @throws Error データの読み取り時に通信エラーが発生した場合に投げられる。
+	 */
+	public async getSystemServiceResponse(): Promise<OperationResult> {
+		if (this.connectionConfig.services.systemService == undefined) throw new NotSupportedError('System Service is not supported on the connected device.');
+
+		return (await this.readCharacteristicValue(this.connectionConfig.services.systemService!.uuid, this.connectionConfig.services.systemService!.characteristics.response!.uuid)).getUint8(0) as OperationResult;
 	}
 }
 
