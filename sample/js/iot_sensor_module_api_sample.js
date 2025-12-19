@@ -125,6 +125,7 @@ async function getOperationMode() {
 		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
 	}
+
 	document.getElementById('value_system_service_operation_mode').innerText = mode == 0 ? 'User Mode' : 'Configuration Mode';
 	setConnectionControlsEnabled(true);
 	if (isConfigurationMode) setConfigurationControlEnabled(true);
@@ -147,6 +148,7 @@ async function getSystemServiceResponse() {
 		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
 	}
+
 	document.getElementById('value_system_service_response').innerText = getStatusCodeText(response);
 	setConnectionControlsEnabled(true);
 	if (isConfigurationMode) setConfigurationControlEnabled(true);
@@ -200,6 +202,7 @@ async function getSensorInterval() {
 		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
 	}
+
 	document.getElementById('value_sensor_service_sensor_interval').innerText = interval;
 	setConnectionControlsEnabled(true);
 	if (isConfigurationMode) setConfigurationControlEnabled(true);
@@ -221,6 +224,7 @@ async function getSensorServiceResponse() {
 		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
 	}
+
 	document.getElementById('value_sensor_service_response').innerText = getStatusCodeText(response);
 	setConnectionControlsEnabled(true);
 	if (isConfigurationMode) setConfigurationControlEnabled(true);
@@ -283,8 +287,59 @@ async function getAdvertiseInterval() {
 		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
 	}
+
 	document.getElementById('value_ble_service_adv_interval_min').innerText = interval.min;
 	document.getElementById('value_ble_service_adv_interval_max').innerText = interval.max;
+	setConnectionControlsEnabled(true);
+	if (isConfigurationMode) setConfigurationControlEnabled(true);
+}
+
+/**
+ * チャンネルマスクの設定入力が正しいかどうかをチェックする。
+ */
+function checkAdvertiseChannelMaskInputs() {
+	const ch37 = document.getElementById('input_ble_service_adv_channel_37').checked;
+	const ch38 = document.getElementById('input_ble_service_adv_channel_38').checked;
+	const ch39 = document.getElementById('input_ble_service_adv_channel_39').checked;
+	if (!ch37 && !ch38 && !ch39) {
+		const messageElement = document.getElementById('message_ble_service_adv_channel_mask');
+		messageElement.innerText = '全てのチャンネルを無効にすることはできません';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_ble_service_set_adv_channel_mask');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else {
+		const messageElement = document.getElementById('message_ble_service_adv_channel_mask');
+		messageElement.innerText = '';
+		messageElement.classList.add('hidden');
+		const buttonElement = document.getElementById('button_ble_service_set_adv_channel_mask');
+		buttonElement.classList.remove('control_disabled');
+		buttonElement.disabled = false;
+	}
+}
+
+/**
+ * アドバタイズチャンネルマスクの現在値を取得して表示する。
+ */
+async function getAdvertiseChannelMask() {
+	setConnectionControlsEnabled(false);
+	setConfigurationControlEnabled(false);
+
+	let mask;
+	try {
+		mask = await api.getAdvertiseChannelMask();
+	}
+	catch (error) {
+		//TODO: エラーを見やすく表示
+		setConnectionControlsEnabled(true);
+		if (isConfigurationMode) setConfigurationControlEnabled(true);
+		throw error;
+	}
+
+	document.getElementById('value_ble_service_adv_channel_37').checked = (mask & 0x01) != 0;
+	document.getElementById('value_ble_service_adv_channel_38').checked = (mask & 0x02) != 0;
+	document.getElementById('value_ble_service_adv_channel_39').checked = (mask & 0x04) != 0;
 	setConnectionControlsEnabled(true);
 	if (isConfigurationMode) setConfigurationControlEnabled(true);
 }
@@ -306,6 +361,7 @@ async function getBLEServiceResponse() {
 		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
 	}
+
 	document.getElementById('value_ble_service_response').innerText = getStatusCodeText(response);
 	setConnectionControlsEnabled(true);
 	if (isConfigurationMode) setConfigurationControlEnabled(true);
@@ -592,6 +648,11 @@ async function init() {
 				document.getElementById('value_system_service_operation_mode').innerText = selectedValue == 0 ? 'User Mode' : 'Configuration Mode';
 				document.getElementById('value_system_service_response').innerText = getStatusCodeText(response);
 				isConfigurationMode = selectedValue == 1;
+				if (isConfigurationMode) {
+					checkSensorIntervalInput();
+					checkAdvertiseIntervalInputs();
+					checkAdvertiseChannelMaskInputs();
+				}
 				setConnectionControlsEnabled(true);
 				if (isConfigurationMode) setConfigurationControlEnabled(true);
 			});
@@ -641,6 +702,7 @@ async function init() {
 
 		// BLE Service
 		if (connectionConfig.services.bleService != undefined) {
+			// Adv. Interval
 			document.querySelectorAll('.ble_service_adv_interval_input').forEach((element) => element.addEventListener('input', checkAdvertiseIntervalInputs));
 			document.getElementById('button_ble_service_set_adv_interval').addEventListener('click', async () => {
 				setConnectionControlsEnabled(false);
@@ -672,6 +734,43 @@ async function init() {
 				if (isConfigurationMode) setConfigurationControlEnabled(true);
 			});
 			document.getElementById('button_ble_service_get_adv_interval').addEventListener('click', async () => getAdvertiseInterval());
+
+			// Adv. Channel Mask
+			document.querySelectorAll('.ble_service_adv_channel_checkbox').forEach((element) => element.addEventListener('input', checkAdvertiseChannelMaskInputs));
+			document.getElementById('button_ble_service_set_adv_channel_mask').addEventListener('click', async () => {
+				setConnectionControlsEnabled(false);
+				setConfigurationControlEnabled(false);
+
+				let response;
+				let channelMask = 0;
+				if (document.getElementById('input_ble_service_adv_channel_37').checked) channelMask |= 0x01;
+				if (document.getElementById('input_ble_service_adv_channel_38').checked) channelMask |= 0x02;
+				if (document.getElementById('input_ble_service_adv_channel_39').checked) channelMask |= 0x04;
+				try {
+					response = await api.setAdvertiseChannelMask(channelMask);
+				}
+				catch (error) {
+					//TODO: エラーを見やすく表示
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw error;
+				}
+				if (response > 0) {
+					//TODO: エラーを見やすく表示
+					document.getElementById('value_ble_service_response').innerText = getStatusCodeText(response);
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw new Error(`Operation failed. Response code: ${getStatusCodeText(response)}`);
+				}
+				document.getElementById('value_ble_service_adv_channel_37').checked = (channelMask & 0x01) != 0;
+				document.getElementById('value_ble_service_adv_channel_38').checked = (channelMask & 0x02) != 0;
+				document.getElementById('value_ble_service_adv_channel_39').checked = (channelMask & 0x04) != 0;
+				document.getElementById('value_ble_service_response').innerText = getStatusCodeText(response);
+				setConnectionControlsEnabled(true);
+				if (isConfigurationMode) setConfigurationControlEnabled(true);
+			});
+			document.getElementById('button_ble_service_get_adv_channel_mask').addEventListener('click', async () => getAdvertiseChannelMask());
+
 			document.getElementById('button_ble_service_get_response').addEventListener('click', async () => getBLEServiceResponse());
 		}
 		else {
@@ -690,6 +789,7 @@ async function init() {
 				await getOperationMode();
 				await getSensorInterval();
 				await getAdvertiseInterval();
+				await getAdvertiseChannelMask();
 			}
 			startObserveButton.disabled = true;
 			connectButton.disabled = true;

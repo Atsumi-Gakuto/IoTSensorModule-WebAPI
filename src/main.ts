@@ -951,7 +951,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @return IoTセンサモジュールから返された応答コード
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがSystemServiceをサポートしていない場合に投げられる。
-	 * @throws InvalidInputError 指定した動作モードが不正な場合に投げられる。
+	 * @throws InvalidInputError 指定された動作モードが不正な場合に投げられる。
 	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
 	 * @throws NetworkError 動作モードの設定中に通信エラーが発生した場合に投げられる。
 	 */
@@ -996,7 +996,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @return IoTセンサモジュールから返された応答コード
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがSensorServiceをサポートしていない場合に投げられる。
-	 * @throws InvalidInputError 指定したセンサーインターバルの値が不正な場合に投げられる。
+	 * @throws InvalidInputError 指定されたセンサーインターバルの値が不正な場合に投げられる。
 	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
 	 * @throws NetworkError センサーインターバルの設定中に通信エラーが発生した場合に投げられる。
 	 */
@@ -1044,7 +1044,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @return IoTセンサモジュールから返された応答コード
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがBLEServiceをサポートしていない場合に投げられる。
-	 * @throws InvalidInputError 指定したアドバタイズインターバルの値が不正な場合に投げられる。
+	 * @throws InvalidInputError 指定されたアドバタイズインターバルの値が不正な場合に投げられる。
 	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
 	 * @throws NetworkError BLEアドバタイズインターバルの設定中に通信エラーが発生した場合に投げられる。
 	 */
@@ -1056,6 +1056,39 @@ export class IoTSensorModuleAPI extends EventTarget {
 
 		const value: Uint16Array = new Uint16Array([Math.round((min - 20) / 0.625), Math.round((max - 20) / 0.625)]);
 		return await this.writeCharacteristicValue(this.connectionConfig.services.bleService!.uuid, this.connectionConfig.services.bleService!.characteristics.advInterval!.uuid, this.connectionConfig.services.bleService!.characteristics.response!.uuid, new Uint8Array(swapUint16Array(value).buffer));
+	}
+
+	/**
+	 * BLEアドバタイズのチャンネルマスクの設定値を取得する。
+	 * @return 現在のBLEアドバタイズチャンネルマスクの設定値。0bit目が37ch、1bit目が38ch、2bit目が39chを示す。
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがBLEServiceをサポートしていない場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError BLEアドバタイズチャンネルマスクの取得中に通信エラーが発生した場合に投げられる。
+	 */
+	public async getAdvertiseChannelMask(): Promise<number> {
+		if (this.connectionConfig.services.bleService == undefined) throw new NotSupportedError('BLE Service is not supported on the connected device.');
+
+		return (await this.readCharacteristicValue(this.connectionConfig.services.bleService!.uuid, this.connectionConfig.services.bleService!.characteristics.channel!.uuid)).getUint8(0);
+	}
+
+	/**
+	 * BLEアドばたいずのチャンネルマスクを設定する。
+	 * @param mask 新たなBLEアドバタイズチャンネルマスクの設定値。0bit目が37ch、1bit目が38ch、2bit目が39chを示す。
+	 * @return IoTセンサモジュールから返された応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがBLEServiceをサポートしていない場合に投げられる。
+	 * @throws InvalidInputError 指定されたチャンネルマスクの値が不正な場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError BLEアドバタイズチャンネルマスクの設定中に通信エラーが発生した場合に投げられる。
+	 */
+	public async setAdvertiseChannelMask(mask: number): Promise<OperationResult> {
+		if (this.connectionConfig.services.bleService == undefined) throw new NotSupportedError('BLE Service is not supported on the connected device.');
+		else if (mask < 1 || mask > 7) throw new InvalidInputError('Advertise channel mask must be between 1 and 7.');
+		else if(mask % 1 > 0) throw new InvalidInputError('Advertise channel mask must be an integer.');
+		else if(mask == 0) throw new InvalidInputError('At least one channel must be selected in the advertise channel mask.');
+
+		return await this.writeCharacteristicValue(this.connectionConfig.services.bleService!.uuid, this.connectionConfig.services.bleService!.characteristics.channel!.uuid, this.connectionConfig.services.bleService!.characteristics.response!.uuid, new Uint8Array([mask]));
 	}
 
 	/**
