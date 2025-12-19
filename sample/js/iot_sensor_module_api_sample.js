@@ -345,6 +345,60 @@ async function getAdvertiseChannelMask() {
 }
 
 /**
+ * アドバタイズの送信電力の設定入力が正しいかどうかをチェックする。
+ */
+function checkAdvertiseTxPowerInput() {
+	const value = document.getElementById('input_ble_service_tx_power').value;
+	if (value < -100 || value > 20) {
+		const messageElement = document.getElementById('message_ble_service_tx_power');
+		messageElement.innerText = '入力値は-100〜20の範囲を超えてはいけません';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_ble_service_set_tx_power');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else if (value % 1 > 0) {
+		const messageElement = document.getElementById('message_ble_service_tx_power');
+		messageElement.innerText = '入力値は整数でなければなりません';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_ble_service_set_tx_power');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else {
+		const messageElement = document.getElementById('message_ble_service_tx_power');
+		messageElement.innerText = '';
+		messageElement.classList.add('hidden');
+		const buttonElement = document.getElementById('button_ble_service_set_tx_power');
+		buttonElement.classList.remove('control_disabled');
+		buttonElement.disabled = false;
+	}
+}
+
+/**
+ * アドバタイズ送信電力の現在値を取得して表示する。
+ */
+async function getAdvertiseTxPower() {
+	setConnectionControlsEnabled(false);
+	setConfigurationControlEnabled(false);
+
+	let txPower;
+	try {
+		txPower = await api.getAdvertiseTxPower();
+	}
+	catch (error) {
+		//TODO: エラーを見やすく表示
+		setConnectionControlsEnabled(true);
+		if (isConfigurationMode) setConfigurationControlEnabled(true);
+		throw error;
+	}
+
+	document.getElementById('value_ble_service_tx_power').innerText = txPower;
+	setConnectionControlsEnabled(true);
+	if (isConfigurationMode) setConfigurationControlEnabled(true);
+}
+
+/**
  * BLE Serviceからの応答コードを取得して表示する。
  */
 async function getBLEServiceResponse() {
@@ -652,6 +706,7 @@ async function init() {
 					checkSensorIntervalInput();
 					checkAdvertiseIntervalInputs();
 					checkAdvertiseChannelMaskInputs();
+					checkAdvertiseTxPowerInput();
 				}
 				setConnectionControlsEnabled(true);
 				if (isConfigurationMode) setConfigurationControlEnabled(true);
@@ -771,6 +826,36 @@ async function init() {
 			});
 			document.getElementById('button_ble_service_get_adv_channel_mask').addEventListener('click', async () => getAdvertiseChannelMask());
 
+			// Adv. Tx Power
+			document.getElementById('input_ble_service_tx_power').addEventListener('input', checkAdvertiseTxPowerInput);
+			document.getElementById('button_ble_service_set_tx_power').addEventListener('click', async () => {
+				setConnectionControlsEnabled(false);
+				setConfigurationControlEnabled(false);
+
+				let response;
+				const txPowerValue = Number(document.getElementById('input_ble_service_tx_power').value);
+				try {
+					response = await api.setAdvertiseTxPower(txPowerValue);
+				}
+				catch (error) {
+					//TODO: エラーを見やすく表示
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw error;
+				}
+				if (response > 0) {
+					//TODO: エラーを見やすく表示
+					document.getElementById('value_ble_service_response').innerText = getStatusCodeText(response);
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw new Error(`Operation failed. Response code: ${getStatusCodeText(response)}`);
+				}
+				document.getElementById('value_ble_service_response').innerText = getStatusCodeText(response);
+				await getAdvertiseTxPower();
+				setConnectionControlsEnabled(true);
+				if (isConfigurationMode) setConfigurationControlEnabled(true);
+			});
+
 			document.getElementById('button_ble_service_get_response').addEventListener('click', async () => getBLEServiceResponse());
 		}
 		else {
@@ -790,6 +875,7 @@ async function init() {
 				await getSensorInterval();
 				await getAdvertiseInterval();
 				await getAdvertiseChannelMask();
+				await getAdvertiseTxPower();
 			}
 			startObserveButton.disabled = true;
 			connectButton.disabled = true;

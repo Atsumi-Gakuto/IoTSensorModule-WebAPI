@@ -1073,7 +1073,7 @@ export class IoTSensorModuleAPI extends EventTarget {
 	}
 
 	/**
-	 * BLEアドばたいずのチャンネルマスクを設定する。
+	 * BLEアドバタイズのチャンネルマスクを設定する。
 	 * @param mask 新たなBLEアドバタイズチャンネルマスクの設定値。0bit目が37ch、1bit目が38ch、2bit目が39chを示す。
 	 * @return IoTセンサモジュールから返された応答コード
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
@@ -1089,6 +1089,38 @@ export class IoTSensorModuleAPI extends EventTarget {
 		else if(mask == 0) throw new InvalidInputError('At least one channel must be selected in the advertise channel mask.');
 
 		return await this.writeCharacteristicValue(this.connectionConfig.services.bleService!.uuid, this.connectionConfig.services.bleService!.characteristics.channel!.uuid, this.connectionConfig.services.bleService!.characteristics.response!.uuid, new Uint8Array([mask]));
+	}
+
+	/**
+	 * BLEアドバタイズの送信電力の設定値を取得する。
+	 * @return 現在のBLEアドバタイズ送信電力の設定値（dBm）
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがBLEServiceをサポートしていない場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError BLEアドバタイズ送信電力の取得中に通信エラーが発生した場合に投げられる。
+	 */
+	public async getAdvertiseTxPower(): Promise<number> {
+		if (this.connectionConfig.services.bleService == undefined) throw new NotSupportedError('BLE Service is not supported on the connected device.');
+
+		return (await this.readCharacteristicValue(this.connectionConfig.services.bleService!.uuid, this.connectionConfig.services.bleService!.characteristics.txPower!.uuid)).getInt8(0);
+	}
+
+	/**
+	 * BLEアドバタイズの送信電力を設定する。
+	 * @param txPower 新たなBLEアドバタイズ送信電力の設定値（dBm）。入力した設定値通りに設定されるとは限らないので注意！
+	 * @return IoTセンサモジュールから返された応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがBLEServiceをサポートしていない場合に投げられる。
+	 * @throws InvalidInputError 指定された送信電力の値が不正な場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError BLEアドバタイズ送信電力の設定中に通信エラーが発生した場合に投げられる。
+	 */
+	public async setAdvertiseTxPower(txPower: number): Promise<OperationResult> {
+		if (this.connectionConfig.services.bleService == undefined) throw new NotSupportedError('BLE Service is not supported on the connected device.');
+		else if (txPower < -100 || txPower > 20) throw new InvalidInputError('Advertise TX power must be between -100dBm and 20dBm.');
+		else if(txPower % 1 > 0) throw new InvalidInputError('Advertise TX power must be an integer.');
+
+		return await this.writeCharacteristicValue(this.connectionConfig.services.bleService!.uuid, this.connectionConfig.services.bleService!.characteristics.txPower!.uuid, this.connectionConfig.services.bleService!.characteristics.response!.uuid, new Uint8Array([txPower]));
 	}
 
 	/**

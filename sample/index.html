@@ -217,6 +217,24 @@
 					</td>
 				</tr>
 				<tr>
+					<td>Adv. Tx Power</td>
+					<td>
+						<div class="flex_column">
+							<div class="flex_row">
+								<p><input id="input_ble_service_tx_power" class="configuration_only_control" type="number" min="-127" max="127" step="1" disabled> dBm</p>
+								<button id="button_ble_service_set_tx_power" class="configuration_only_control control_disabled" disabled>変更</button>
+							</div>
+							<p id="message_ble_service_tx_power" class="message_ng hidden"></p>
+						</div>
+					</td>
+					<td>
+						<div class="flex_row">
+							<p><span id="value_ble_service_tx_power" class="configuration_value">---</span> dBm</p>
+							<button id="button_ble_service_get_tx_power" class="connection_only_control" disabled>取得</button>
+						</div>
+					</td>
+				</tr>
+				<tr>
 					<td>Response</td>
 					<td></td>
 					<td>
