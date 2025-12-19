@@ -279,7 +279,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @param characteristicUuid データ読み出し対象のキャラクタリスティックのUUID
 	 * @returns 読み出されたデータが符号なし8ビット整数の配列として返される。
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
-	 * @throws Error データの読み出し時に通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError キャラクタリスティックからデータの読み出し時に通信エラーが発生した場合に投げられる。
 	 */
 	private async readCharacteristicValue(serviceUuid: string, characteristicUuid: string): Promise<DataView<ArrayBufferLike>> {
 		if (this.connectedDevice == null) throw new InvalidStateError('No device is connected.');
@@ -297,7 +298,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @param responseCharacteristicUuid 応答コードが格納されるキャラクタリスティックのUUID
 	 * @returns IoTセンサモジュールが返した応答コード
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
-	 * @throws Error データの書き込み時に通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError キャラクタリスティックへのデータの書き込み時に通信エラーが発生した場合に投げられる。
 	 */
 	private async writeCharacteristicValue(serviceUuid: string, characteristicUuid: string, responseCharacteristicUuid: string, value: Uint8Array): Promise<OperationResult> {
 		if (this.connectedDevice == null) throw new InvalidStateError('No device is connected.');
@@ -314,7 +316,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @param characteristicUuid Notification購読対象のキャラクタリスティックのUUID
 	 * @param listener Notification受信時に呼び出されるコールバック関数
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
-	 * @throws Error Notification購読処理中の通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError キャラクタリスティックのNotificationへの購読処理中に通信エラーが発生した場合に投げられる。
 	 */
 	private async subscribeCharacteristicNotification(serviceUuid: string, characteristicUuid: string, listener: (event: Event) => void): Promise<void> {
 		if (this.connectedDevice == null) throw new InvalidStateError('No device is connected.');
@@ -331,7 +334,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @param characteristicUuid Notification購読終了対象のキャラクタリスティックのUUID
 	 * @param listener イベントリスナー解除用のリスナー関数。サブスクライブしたときのものと同じものを渡す。
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
-	 * @throws Error Notification購読終了処理中の通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError キャラクタリスティックのNotificationへの購読停止処理中に通信エラーが発生した場合に投げられる。
 	 */
 	private async unsubscribeCharacteristicNotification(serviceUuid: string, characteristicUuid: string, listener: (event: Event) => void): Promise<void> {
 		if (this.connectedDevice == null) throw new InvalidStateError('No device is connected.');
@@ -349,7 +353,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがDataServiceをサポートしていない場合に投げられる。
 	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
-	 * @throws Error データの読み出し時に通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError センサーデータの読み出し中に通信エラーが発生した場合に投げられる。
 	 */
 	public async getSensorData(sensorName: string): Promise<number|BigInt|Vector3<number>|Vector3<BigInt>> {
 		if (this.connectionConfig.services.dataService == undefined) throw new NotSupportedError('Data Service is not supported on the connected device.');
@@ -452,7 +457,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがDataServiceをサポートしていない場合に投げられる。
 	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
-	 * @throws Error Notification購読処理中の通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError センサーデータのNotificationへの購読処理中に通信エラーが発生した場合に投げられる。
 	 */
 	public async subscribeSensorData(sensorName: string, listener: (event: Event, value: number|BigInt|Vector3<number>|Vector3<BigInt>) => void): Promise<number> {
 		if (this.connectionConfig.services.dataService == undefined) throw new NotSupportedError('Data Service is not supported on the connected device.');
@@ -580,7 +586,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがDataServiceをサポートしていない場合に投げられる。
 	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
-	 * @throws Error Notification購読処理中の通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError センサーデータのNotificationへの購読停止処理中に通信エラーが発生した場合に投げられる。
 	 */
 	public async unsubscribeSensorData(sensorName: string, handler: number): Promise<void> {
 		if (this.connectionConfig.services.dataService == undefined) throw new NotSupportedError('Data Service is not supported on the connected device.');
@@ -599,7 +606,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがLogServiceをサポートしていない場合に投げられる。
 	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
-	 * @throws Error ログの読み出し時に通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError センサーログの読み出し中に通信エラーが発生した場合に投げられる。
 	 */
 	public async readSensorLog(sensorName: string): Promise<(number|BigInt|Vector3<number>|Vector3<BigInt>)[]> {
 		if (this.connectionConfig.services.logService == undefined) throw new NotSupportedError('Log Service is not supported on the connected device.');
@@ -742,7 +750,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがLogServiceをサポートしていない場合に投げられる。
 	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
-	 * @throws Error Notification購読処理中の通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError センサーログのNotificationへの購読処理中に通信エラーが発生した場合に投げられる。
 	 */
 	public async subscribeSensorLog(sensorName: string, listener: (event: Event, value: (number|BigInt|Vector3<number>|Vector3<BigInt>)[]) => void): Promise<number> {
 		if (this.connectionConfig.services.logService == undefined) throw new NotSupportedError('Log Service is not supported on the connected device.');
@@ -910,7 +919,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがLogServiceをサポートしていない場合に投げられる。
 	 * @throws InvalidInputError 指定した名前のセンサーデータが存在しない場合に投げられる。
-	 * @throws Error Notification購読終了処理中の通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError センサーログのNotificationへの購読停止処理中に通信エラーが発生した場合に投げられる。
 	 */
 	public async unsubscribeSensorLog(sensorName: string, handler: number): Promise<void> {
 		if (this.connectionConfig.services.logService == undefined) throw new NotSupportedError('Log Service is not supported on the connected device.');
@@ -927,7 +937,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @return 現在の動作モード
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがSystemServiceをサポートしていない場合に投げられる。
-	 * @throws Error データの読み取り時に通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError 動作モードの取得中に通信エラーが発生した場合に投げられる。
 	 */
 	public async getOperationMode(): Promise<OperationMode> {
 		if (this.connectionConfig.services.systemService == undefined) throw new NotSupportedError('System Service is not supported on the connected device.');
@@ -941,7 +952,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがSystemServiceをサポートしていない場合に投げられる。
 	 * @throws InvalidInputError 指定した動作モードが不正な場合に投げられる。
-	 * @throws Error データの書き込み時に通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError 動作モードの設定中に通信エラーが発生した場合に投げられる。
 	 */
 	public async setOperationMode(mode: OperationMode): Promise<OperationResult> {
 		if (this.connectionConfig.services.systemService == undefined) throw new NotSupportedError('System Service is not supported on the connected device.');
@@ -955,7 +967,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @return IoTセンサモジュールから返された応答コード
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがSystemServiceをサポートしていない場合に投げられる。
-	 * @throws Error データの読み取り時に通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError 応答コードの取得中に通信エラーが発生した場合に投げられる。
 	 */
 	public async getSystemServiceResponse(): Promise<OperationResult> {
 		if (this.connectionConfig.services.systemService == undefined) throw new NotSupportedError('System Service is not supported on the connected device.');
@@ -968,7 +981,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @return 現在のBLEアドバタイズインターバルの設定値。最小値と最大値（共にms）が含まれる。
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがBLEServiceをサポートしていない場合に投げられる。
-	 * @throws Error データの読み取り時に通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError BLEアドバタイズインターバルの取得中に通信エラーが発生した場合に投げられる。
 	 */
 	public async getAdvertiseInterval(): Promise<AdvertisementIntervalData> {
 		if (this.connectionConfig.services.bleService == undefined) throw new NotSupportedError('BLE Service is not supported on the connected device.');
@@ -985,7 +999,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがBLEServiceをサポートしていない場合に投げられる。
 	 * @throws InvalidInputError 指定したアドバタイズインターバルの値が不正な場合に投げられる。
-	 * @throws Error データの書き込み時に通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError BLEアドバタイズインターバルの設定中に通信エラーが発生した場合に投げられる。
 	 */
 	public async setAdvertiseInterval(min: number, max: number): Promise<OperationResult> {
 		if (this.connectionConfig.services.bleService == undefined) throw new NotSupportedError('BLE Service is not supported on the connected device.');
@@ -1002,7 +1017,8 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 * @return IoTセンサモジュールから返された応答コード
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
 	 * @throws NotSupportedError 接続先のIoTセンサモジュールがBLEServiceをサポートしていない場合に投げられる。
-	 * @throws Error データの読み取り時に通信エラーが発生した場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError 応答コードの取得中に通信エラーが発生した場合に投げられる。
 	 */
 	public async getBLEServiceResponse(): Promise<OperationResult> {
 		if (this.connectionConfig.services.bleService == undefined) throw new NotSupportedError('BLE Service is not supported on the connected device.');
