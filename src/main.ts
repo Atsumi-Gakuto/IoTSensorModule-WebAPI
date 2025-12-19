@@ -1133,7 +1133,54 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 */
 	public async getBLEServiceResponse(): Promise<OperationResult> {
 		if (this.connectionConfig.services.bleService == undefined) throw new NotSupportedError('BLE Service is not supported on the connected device.');
+
 		return (await this.readCharacteristicValue(this.connectionConfig.services.bleService!.uuid, this.connectionConfig.services.bleService!.characteristics.response!.uuid)).getUint8(0) as OperationResult;
+	}
+
+	/**
+	 * 現在編集中の条件式IDを取得する。
+	 * @return 現在編集中の条件式ID
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがExpressionServiceをサポートしていない場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError 条件式IDの取得中に通信エラーが発生した場合に投げられる。
+	 */
+	public async getCurrentExpression(): Promise<number> {
+		if (this.connectionConfig.services.expressionService == undefined) throw new NotSupportedError('Expression Service is not supported on the connected device.');
+
+		return (await this.readCharacteristicValue(this.connectionConfig.services.expressionService!.uuid, this.connectionConfig.services.expressionService!.characteristics.targetTask!.uuid)).getUint8(0);
+	}
+
+	/**
+	 * 編集中の条件式IDを変更する。
+	 * @param expressionId 新たな編集中の条件式ID
+	 * @return IoTセンサモジュールから返された応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがExpressionServiceをサポートしていない場合に投げられる。
+	 * @throws InvalidInputError 指定された条件式IDが不正な場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError 条件式IDの設定中に通信エラーが発生した場合に投げられる。
+	 */
+	public async setCurrentExpression(expressionId: number): Promise<OperationResult> {
+		if (this.connectionConfig.services.expressionService == undefined) throw new NotSupportedError('Expression Service is not supported on the connected device.');
+		else if (expressionId < 0 || expressionId > 255) throw new InvalidInputError('Expression ID must be between 0 and 255.');
+		else if (expressionId % 1 > 0) throw new InvalidInputError('Expression ID must be an integer.');
+
+		return await this.writeCharacteristicValue(this.connectionConfig.services.expressionService!.uuid, this.connectionConfig.services.expressionService!.characteristics.targetTask!.uuid, this.connectionConfig.services.expressionService!.characteristics.response!.uuid, new Uint8Array([expressionId]));
+	}
+
+	/**
+	 * Expression Serviceの応答コードを取得する。
+	 * @return IoTセンサモジュールから返された応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがExpressionServiceをサポートしていない場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError 応答コードの取得中に通信エラーが発生した場合に投げられる。
+	 */
+	public async getExpressionServiceResponse(): Promise<OperationResult> {
+		if (this.connectionConfig.services.expressionService == undefined) throw new NotSupportedError('Expression Service is not supported on the connected device.');
+
+		return (await this.readCharacteristicValue(this.connectionConfig.services.expressionService!.uuid, this.connectionConfig.services.expressionService!.characteristics.response!.uuid)).getUint8(0) as OperationResult;
 	}
 }
 

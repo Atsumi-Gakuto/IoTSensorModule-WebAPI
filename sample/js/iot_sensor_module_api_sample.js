@@ -120,7 +120,7 @@ async function getOperationMode() {
 		mode = await api.getOperationMode();
 	}
 	catch (error) {
-		//TODO: エラーを見やすく表示
+		// TODO: エラーを見やすく表示
 		setConnectionControlsEnabled(true);
 		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
@@ -143,7 +143,7 @@ async function getSystemServiceResponse() {
 		response = await api.getSystemServiceResponse();
 	}
 	catch (error) {
-		//TODO: エラーを見やすく表示
+		// TODO: エラーを見やすく表示
 		setConnectionControlsEnabled(true);
 		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
@@ -197,7 +197,7 @@ async function getSensorInterval() {
 		interval = await api.getSensorInterval();
 	}
 	catch (error) {
-		//TODO: エラーを見やすく表示
+		// TODO: エラーを見やすく表示
 		setConnectionControlsEnabled(true);
 		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
@@ -219,7 +219,7 @@ async function getSensorServiceResponse() {
 		response = await api.getSensorServiceResponse();
 	}
 	catch (error) {
-		//TODO: エラーを見やすく表示
+		// TODO: エラーを見やすく表示
 		setConnectionControlsEnabled(true);
 		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
@@ -282,7 +282,7 @@ async function getAdvertiseInterval() {
 		interval = await api.getAdvertiseInterval();
 	}
 	catch (error) {
-		//TODO: エラーを見やすく表示
+		// TODO: エラーを見やすく表示
 		setConnectionControlsEnabled(true);
 		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
@@ -331,7 +331,7 @@ async function getAdvertiseChannelMask() {
 		mask = await api.getAdvertiseChannelMask();
 	}
 	catch (error) {
-		//TODO: エラーを見やすく表示
+		// TODO: エラーを見やすく表示
 		setConnectionControlsEnabled(true);
 		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
@@ -387,7 +387,7 @@ async function getAdvertiseTxPower() {
 		txPower = await api.getAdvertiseTxPower();
 	}
 	catch (error) {
-		//TODO: エラーを見やすく表示
+		// TODO: エラーを見やすく表示
 		setConnectionControlsEnabled(true);
 		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
@@ -410,13 +410,90 @@ async function getBLEServiceResponse() {
 		response = await api.getBLEServiceResponse();
 	}
 	catch (error) {
-		//TODO: エラーを見やすく表示
+		// TODO: エラーを見やすく表示
 		setConnectionControlsEnabled(true);
 		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
 	}
 
 	document.getElementById('value_ble_service_response').innerText = getStatusCodeText(response);
+	setConnectionControlsEnabled(true);
+	if (isConfigurationMode) setConfigurationControlEnabled(true);
+}
+
+/**
+ * ターゲットの条件式の設定値入力が正しいかどうかをチェックする。
+ */
+function checkTargetExpressionInput() {
+	const value = document.getElementById('input_expression_service_target_expression').value;
+	if (value < 0 || value > 255) {
+		const messageElement = document.getElementById('message_expression_service_target_expression');
+		messageElement.innerText = '入力値は0〜255の範囲を超えてはいけません';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_expression_service_set_target_expression');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else if (value % 1 > 0) {
+		const messageElement = document.getElementById('message_expression_service_target_expression');
+		messageElement.innerText = '入力値は整数でなければなりません';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_expression_service_set_target_expression');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else {
+		const messageElement = document.getElementById('message_expression_service_target_expression');
+		messageElement.innerText = '';
+		messageElement.classList.add('hidden');
+		const buttonElement = document.getElementById('button_expression_service_set_target_expression');
+		buttonElement.classList.remove('control_disabled');
+		buttonElement.disabled = false;
+	}
+}
+
+/**
+ * 現在編集中の条件式のIDを取得して表示する。
+ */
+async function getTargetExpression() {
+	setConnectionControlsEnabled(false);
+	setConfigurationControlEnabled(false);
+
+	let expressionId;
+	try {
+		expressionId = await api.getCurrentExpression();
+	}
+	catch (error) {
+		// TODO: エラーを見やすく表示
+		setConnectionControlsEnabled(true);
+		if (isConfigurationMode) setConfigurationControlEnabled(true);
+		throw error;
+	}
+
+	document.getElementById('value_expression_service_target_expression').innerText = expressionId;
+	setConnectionControlsEnabled(true);
+	if (isConfigurationMode) setConfigurationControlEnabled(true);
+}
+
+/**
+ * Expression Serviceからの応答コードを取得して表示する。
+ */
+async function getExpressionServiceResponse() {
+	setConnectionControlsEnabled(false);
+	setConfigurationControlEnabled(false);
+
+	let response;
+	try {
+		response = await api.getExpressionServiceResponse();
+	}
+	catch (error) {
+		// TODO: エラーを見やすく表示
+		setConnectionControlsEnabled(true);
+		if (isConfigurationMode) setConfigurationControlEnabled(true);
+		throw error;
+	}
+
+	document.getElementById('value_expression_service_response').innerText = getStatusCodeText(response);
 	setConnectionControlsEnabled(true);
 	if (isConfigurationMode) setConfigurationControlEnabled(true);
 }
@@ -543,7 +620,7 @@ async function init() {
 					sensorData = await api.getSensorData(sensorDataName);
 				}
 				catch (error) {
-					//TODO: エラーを見やすく表示
+					// TODO: エラーを見やすく表示
 					setConnectionControlsEnabled(true);
 					if (isConfigurationMode) setConfigurationControlEnabled(true);
 					throw error;
@@ -568,7 +645,7 @@ async function init() {
 						dataServiceNotificationEventHandlers[sensorDataName] = await api.subscribeSensorData(sensorDataName, (event, value) => pushSensorData(sensorDataName, value, connectionConfig.services.dataService.characteristics[sensorDataName].unit));
 					}
 					catch (error) {
-						//TODO: エラーを見やすく表示
+						// TODO: エラーを見やすく表示
 						setConnectionControlsEnabled(true);
 						if (isConfigurationMode) setConfigurationControlEnabled(true);
 						throw error;
@@ -579,7 +656,7 @@ async function init() {
 						await api.unsubscribeSensorData(sensorDataName, dataServiceNotificationEventHandlers[sensorDataName]);
 					}
 					catch (error) {
-						//TODO: エラーを見やすく表示
+						// TODO: エラーを見やすく表示
 						setConnectionControlsEnabled(true);
 						if (isConfigurationMode) setConfigurationControlEnabled(true);
 						throw error;
@@ -605,7 +682,7 @@ async function init() {
 					sensorLog = await api.readSensorLog(sensorDataName);
 				}
 				catch (error) {
-					//TODO: エラーを見やすく表示
+					// TODO: エラーを見やすく表示
 					setConnectionControlsEnabled(true);
 					if (isConfigurationMode) setConfigurationControlEnabled(true);
 					throw error;
@@ -630,7 +707,7 @@ async function init() {
 						logServiceNotificationEventHandlers[sensorDataName] = await api.subscribeSensorLog(sensorDataName, (event, value) => pushSensorLog(sensorDataName, value, connectionConfig.services.logService.characteristics[sensorDataName].unit));
 					}
 					catch (error) {
-						//TODO: エラーを見やすく表示
+						// TODO: エラーを見やすく表示
 						setConnectionControlsEnabled(true);
 						if (isConfigurationMode) setConfigurationControlEnabled(true);
 						throw error;
@@ -641,7 +718,7 @@ async function init() {
 						await api.unsubscribeSensorLog(sensorDataName, logServiceNotificationEventHandlers[sensorDataName]);
 					}
 					catch (error) {
-						//TODO: エラーを見やすく表示
+						// TODO: エラーを見やすく表示
 						setConnectionControlsEnabled(true);
 						if (isConfigurationMode) setConfigurationControlEnabled(true);
 						throw error;
@@ -687,13 +764,13 @@ async function init() {
 					response = await api.setOperationMode(Number(selectedValue));
 				}
 				catch (error) {
-					//TODO: エラーを見やすく表示
+					// TODO: エラーを見やすく表示
 					setConnectionControlsEnabled(true);
 					if (isConfigurationMode) setConfigurationControlEnabled(true);
 					throw error;
 				}
 				if (response > 0) {
-					//TODO: エラーを見やすく表示
+					// TODO: エラーを見やすく表示
 					document.getElementById('value_system_service_response').innerText = getStatusCodeText(response);
 					setConnectionControlsEnabled(true);
 					if (isConfigurationMode) setConfigurationControlEnabled(true);
@@ -707,6 +784,7 @@ async function init() {
 					checkAdvertiseIntervalInputs();
 					checkAdvertiseChannelMaskInputs();
 					checkAdvertiseTxPowerInput();
+					checkTargetExpressionInput();
 				}
 				setConnectionControlsEnabled(true);
 				if (isConfigurationMode) setConfigurationControlEnabled(true);
@@ -731,13 +809,13 @@ async function init() {
 					response = await api.setSensorInterval(intervalValue);
 				}
 				catch (error) {
-					//TODO: エラーを見やすく表示
+					// TODO: エラーを見やすく表示
 					setConnectionControlsEnabled(true);
 					if (isConfigurationMode) setConfigurationControlEnabled(true);
 					throw error;
 				}
 				if (response > 0) {
-					//TODO: エラーを見やすく表示
+					// TODO: エラーを見やすく表示
 					document.getElementById('value_sensor_service_response').innerText = getStatusCodeText(response);
 					setConnectionControlsEnabled(true);
 					if (isConfigurationMode) setConfigurationControlEnabled(true);
@@ -770,13 +848,13 @@ async function init() {
 					response = await api.setAdvertiseInterval(minValue, maxValue);
 				}
 				catch (error) {
-					//TODO: エラーを見やすく表示
+					// TODO: エラーを見やすく表示
 					setConnectionControlsEnabled(true);
 					if (isConfigurationMode) setConfigurationControlEnabled(true);
 					throw error;
 				}
 				if (response > 0) {
-					//TODO: エラーを見やすく表示
+					// TODO: エラーを見やすく表示
 					document.getElementById('value_ble_service_response').innerText = getStatusCodeText(response);
 					setConnectionControlsEnabled(true);
 					if (isConfigurationMode) setConfigurationControlEnabled(true);
@@ -805,13 +883,13 @@ async function init() {
 					response = await api.setAdvertiseChannelMask(channelMask);
 				}
 				catch (error) {
-					//TODO: エラーを見やすく表示
+					// TODO: エラーを見やすく表示
 					setConnectionControlsEnabled(true);
 					if (isConfigurationMode) setConfigurationControlEnabled(true);
 					throw error;
 				}
 				if (response > 0) {
-					//TODO: エラーを見やすく表示
+					// TODO: エラーを見やすく表示
 					document.getElementById('value_ble_service_response').innerText = getStatusCodeText(response);
 					setConnectionControlsEnabled(true);
 					if (isConfigurationMode) setConfigurationControlEnabled(true);
@@ -838,13 +916,13 @@ async function init() {
 					response = await api.setAdvertiseTxPower(txPowerValue);
 				}
 				catch (error) {
-					//TODO: エラーを見やすく表示
+					// TODO: エラーを見やすく表示
 					setConnectionControlsEnabled(true);
 					if (isConfigurationMode) setConfigurationControlEnabled(true);
 					throw error;
 				}
 				if (response > 0) {
-					//TODO: エラーを見やすく表示
+					// TODO: エラーを見やすく表示
 					document.getElementById('value_ble_service_response').innerText = getStatusCodeText(response);
 					setConnectionControlsEnabled(true);
 					if (isConfigurationMode) setConfigurationControlEnabled(true);
@@ -862,6 +940,42 @@ async function init() {
 			document.getElementById('ble_service_area').classList.add('hidden');
 		}
 
+		// Expression Service
+		if (connectionConfig.services.expressionService != undefined) {
+			// Target Expression
+			document.getElementById('input_expression_service_target_expression').addEventListener('input', checkTargetExpressionInput);
+			document.getElementById('button_expression_service_set_target_expression').addEventListener('click', async () => {
+				setConnectionControlsEnabled(false);
+				setConfigurationControlEnabled(false);
+
+				let response;
+				const expressionIdValue = Number(document.getElementById('input_expression_service_target_expression').value);
+				try {
+					response = await api.setCurrentExpression(expressionIdValue);
+				}
+				catch (error) {
+					// TODO: エラーを見やすく表示
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw error;
+				}
+				if (response > 0) {
+					// TODO: エラーを見やすく表示
+					document.getElementById('value_expression_service_response').innerText = getStatusCodeText(response);
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw new Error(`Operation failed. Response code: ${getStatusCodeText(response)}`);
+				}
+
+				document.getElementById('value_expression_service_target_expression').innerText = expressionIdValue;
+				document.getElementById('value_expression_service_response').innerText = getStatusCodeText(response);
+				setConnectionControlsEnabled(true);
+				if (isConfigurationMode) setConfigurationControlEnabled(true);
+			});
+			document.getElementById('button_expression_service_get_target_expression').addEventListener('click', async () => getTargetExpression());
+			document.getElementById('button_expression_service_get_response').addEventListener('click', async () => getExpressionServiceResponse());
+		}
+
 		// イベント登録
 		api.addEventListener('trigger-data-received', () => {
 			document.getElementById('message_last_trigger_timestamp').innerText = new Date(api.getLastTriggerTimestamp()).toLocaleString();
@@ -876,6 +990,7 @@ async function init() {
 				await getAdvertiseInterval();
 				await getAdvertiseChannelMask();
 				await getAdvertiseTxPower();
+				await getTargetExpression();
 			}
 			startObserveButton.disabled = true;
 			connectButton.disabled = true;
