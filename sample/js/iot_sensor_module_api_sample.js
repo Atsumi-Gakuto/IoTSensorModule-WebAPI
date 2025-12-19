@@ -7,6 +7,11 @@ import { IoTSensorModuleAPI } from '../../dist/iot_sensor_module_api.mjs';
 let api;
 
 /**
+ * 接続先のIoTセンサモジュールがコンフィグレーションモードかどうか
+ */
+let isConfigurationMode = false;
+
+/**
  * Data ServiceのNotificationイベントハンドラーの格納用オブジェクト
  * @type {Object<string,Function>}
  */
@@ -22,9 +27,22 @@ const logServiceNotificationEventHandlers = {};
  * IoTセンサモジュールからのデータ取得や操作のボタンを一括で有効/無効にする。
  * @param {boolean} isEnabled 有効にする場合はtrue、無効にする場合はfalse
  */
-function setControlsEnabled(isEnabled) {
-	if (isEnabled) document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = false);
+function setConnectionControlsEnabled(isEnabled) {
+	if (isEnabled) document.querySelectorAll('.connection_only_control').forEach((element) => {
+		if (!element.classList.contains('control_disabled')) element.disabled = false;
+	});
 	else document.querySelectorAll('.connection_only_control').forEach((element) => element.disabled = true);
+}
+
+/**
+ * IoTセンサモジュールの設定変更入力を一括で有効/無効にする。
+ * @param {boolean} isEnabled 有効にする場合はtrue、無効にする場合はfalse
+ */
+function setConfigurationControlEnabled(isEnabled) {
+	if (isEnabled) document.querySelectorAll('.configuration_only_control').forEach((element) => {
+		if (!element.classList.contains('control_disabled')) element.disabled = false;
+	});
+	else document.querySelectorAll('.configuration_only_control').forEach((element) => element.disabled = true);
 }
 
 /**
@@ -94,7 +112,8 @@ function getStatusCodeText(code) {
  * IoTセンサモジュールの動作モードを取得して表示する。
  */
 async function getOperationMode() {
-	setControlsEnabled(false);
+	setConnectionControlsEnabled(false);
+	setConfigurationControlEnabled(false);
 
 	let mode;
 	try {
@@ -102,18 +121,21 @@ async function getOperationMode() {
 	}
 	catch (error) {
 		//TODO: エラーを見やすく表示
-		setControlsEnabled(true);
+		setConnectionControlsEnabled(true);
+		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
 	}
 	document.getElementById('value_system_service_operation_mode').innerText = mode == 0 ? 'User Mode' : 'Configuration Mode';
-	setControlsEnabled(true);
+	setConnectionControlsEnabled(true);
+	if (isConfigurationMode) setConfigurationControlEnabled(true);
 }
 
 /**
  * System Serviceからの応答コードを取得して表示する。
  */
 async function getSystemServiceResponse() {
-	setControlsEnabled(false);
+	setConnectionControlsEnabled(false);
+	setConfigurationControlEnabled(false);
 
 	let response;
 	try {
@@ -121,11 +143,98 @@ async function getSystemServiceResponse() {
 	}
 	catch (error) {
 		//TODO: エラーを見やすく表示
-		setControlsEnabled(true);
+		setConnectionControlsEnabled(true);
+		if (isConfigurationMode) setConfigurationControlEnabled(true);
 		throw error;
 	}
 	document.getElementById('value_system_service_response').innerText = getStatusCodeText(response);
-	setControlsEnabled(true);
+	setConnectionControlsEnabled(true);
+	if (isConfigurationMode) setConfigurationControlEnabled(true);
+}
+
+/**
+ * アドバタイズインターバルの設定入力が正しいかチェックする。
+ */
+function checkAdvertiseIntervalInputs() {
+	const minValue = Number(document.getElementById('input_ble_service_adv_interval_min').value);
+	const maxValue = Number(document.getElementById('input_ble_service_adv_interval_max').value);
+	if (minValue < 20 || minValue > 10240 || maxValue < 20 || maxValue > 10240) {
+		const messageElement = document.getElementById('message_ble_service_adv_interval');
+		messageElement.innerText = '入力値は20〜10240の範囲を超えてはいけません';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_ble_service_set_adv_interval');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else if (minValue % 0.0625 != 0 || maxValue % 0.0625 != 0) {
+		const messageElement = document.getElementById('message_ble_service_adv_interval');
+		messageElement.innerText = '入力値は0.0625の倍数でなければなりません';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_ble_service_set_adv_interval');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else if (minValue > maxValue) {
+		const messageElement = document.getElementById('message_ble_service_adv_interval');
+		messageElement.innerText = '最小値が最大値を超えてはいけません';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_ble_service_set_adv_interval');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else {
+		const messageElement = document.getElementById('message_ble_service_adv_interval');
+		messageElement.innerText = '';
+		messageElement.classList.add('hidden');
+		const buttonElement = document.getElementById('button_ble_service_set_adv_interval');
+		buttonElement.classList.remove('control_disabled');
+		buttonElement.disabled = false;
+	}
+}
+
+/**
+ * アドバタイズインターバルの現在値を取得して表示する。
+ */
+async function getAdvertiseInterval() {
+	setConnectionControlsEnabled(false);
+	setConfigurationControlEnabled(false);
+
+	let interval;
+	try {
+		interval = await api.getAdvertiseInterval();
+	}
+	catch (error) {
+		//TODO: エラーを見やすく表示
+		setConnectionControlsEnabled(true);
+		if (isConfigurationMode) setConfigurationControlEnabled(true);
+		throw error;
+	}
+	document.getElementById('value_ble_service_adv_interval_min').innerText = interval.min;
+	document.getElementById('value_ble_service_adv_interval_max').innerText = interval.max;
+	setConnectionControlsEnabled(true);
+	if (isConfigurationMode) setConfigurationControlEnabled(true);
+}
+
+/**
+ * BLE Serviceからの応答コードを取得して表示する。
+ */
+async function getBLEServiceResponse() {
+	setConnectionControlsEnabled(false);
+	setConfigurationControlEnabled(false);
+
+	let response;
+	try {
+		response = await api.getBLEServiceResponse();
+	}
+	catch (error) {
+		//TODO: エラーを見やすく表示
+		setConnectionControlsEnabled(true);
+		if (isConfigurationMode) setConfigurationControlEnabled(true);
+		throw error;
+	}
+	document.getElementById('value_ble_service_response').innerText = getStatusCodeText(response);
+	setConnectionControlsEnabled(true);
+	if (isConfigurationMode) setConfigurationControlEnabled(true);
 }
 
 /**
@@ -243,18 +352,21 @@ async function init() {
 			dataServiceGetDataButtonElement.classList.add('connection_only_control')
 			dataServiceGetDataButtonElement.disabled = true
 			dataServiceGetDataButtonElement.addEventListener('click', async () => {
-				setControlsEnabled(false);
+				setConnectionControlsEnabled(false);
+				setConfigurationControlEnabled(false);
 				let sensorData;
 				try {
 					sensorData = await api.getSensorData(sensorDataName);
 				}
 				catch (error) {
 					//TODO: エラーを見やすく表示
-					setControlsEnabled(true);
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
 					throw error;
 				}
 				pushSensorData(sensorDataName, sensorData, connectionConfig.services.dataService.characteristics[sensorDataName].unit);
-				setControlsEnabled(true);
+				setConnectionControlsEnabled(true);
+				if (isConfigurationMode) setConfigurationControlEnabled(true);
 			});
 			dataServiceGetDataButtonCellElement.append(dataServiceGetDataButtonElement);
 			tableRowElement.append(dataServiceGetDataButtonCellElement);
@@ -264,7 +376,8 @@ async function init() {
 			dataServiceSubscribeButtonElement.classList.add('connection_only_control', 'notification_checkbox')
 			dataServiceSubscribeButtonElement.disabled = true
 			dataServiceSubscribeButtonElement.addEventListener('change', async () => {
-				setControlsEnabled(false);
+				setConnectionControlsEnabled(false);
+				setConfigurationControlEnabled(false);
 
 				if (dataServiceSubscribeButtonElement.checked) {
 					try {
@@ -272,7 +385,8 @@ async function init() {
 					}
 					catch (error) {
 						//TODO: エラーを見やすく表示
-						setControlsEnabled(true);
+						setConnectionControlsEnabled(true);
+						if (isConfigurationMode) setConfigurationControlEnabled(true);
 						throw error;
 					}
 				}
@@ -282,11 +396,13 @@ async function init() {
 					}
 					catch (error) {
 						//TODO: エラーを見やすく表示
-						setControlsEnabled(true);
+						setConnectionControlsEnabled(true);
+						if (isConfigurationMode) setConfigurationControlEnabled(true);
 						throw error;
 					}
 				}
-				setControlsEnabled(true);
+				setConnectionControlsEnabled(true);
+				if (isConfigurationMode) setConfigurationControlEnabled(true);
 			});
 			dataServiceSubscribeButtonCellElement.append(dataServiceSubscribeButtonElement);
 			tableRowElement.append(dataServiceSubscribeButtonCellElement);
@@ -298,18 +414,21 @@ async function init() {
 			logServiceGetDataButtonElement.classList.add('connection_only_control')
 			logServiceGetDataButtonElement.disabled = true
 			logServiceGetDataButtonElement.addEventListener('click', async () => {
-				setControlsEnabled(false);
+				setConnectionControlsEnabled(false);
+				setConfigurationControlEnabled(false);
 				let sensorLog;
 				try {
 					sensorLog = await api.readSensorLog(sensorDataName);
 				}
 				catch (error) {
 					//TODO: エラーを見やすく表示
-					setControlsEnabled(true);
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
 					throw error;
 				}
 				pushSensorLog(sensorDataName, sensorLog, connectionConfig.services.logService.characteristics[sensorDataName].unit);
-				setControlsEnabled(true);
+				setConnectionControlsEnabled(true);
+				if (isConfigurationMode) setConfigurationControlEnabled(true);
 			});
 			logServiceGetDataButtonCellElement.append(logServiceGetDataButtonElement);
 			tableRowElement.append(logServiceGetDataButtonCellElement);
@@ -319,7 +438,8 @@ async function init() {
 			logServiceSubscribeButtonElement.classList.add('connection_only_control', 'notification_checkbox')
 			logServiceSubscribeButtonElement.disabled = true
 			logServiceSubscribeButtonElement.addEventListener('change', async () => {
-				setControlsEnabled(false);
+				setConnectionControlsEnabled(false);
+				setConfigurationControlEnabled(false);
 
 				if (logServiceSubscribeButtonElement.checked) {
 					try {
@@ -327,7 +447,8 @@ async function init() {
 					}
 					catch (error) {
 						//TODO: エラーを見やすく表示
-						setControlsEnabled(true);
+						setConnectionControlsEnabled(true);
+						if (isConfigurationMode) setConfigurationControlEnabled(true);
 						throw error;
 					}
 				}
@@ -337,11 +458,13 @@ async function init() {
 					}
 					catch (error) {
 						//TODO: エラーを見やすく表示
-						setControlsEnabled(true);
+						setConnectionControlsEnabled(true);
+						if (isConfigurationMode) setConfigurationControlEnabled(true);
 						throw error;
 					}
 				}
-				setControlsEnabled(true);
+				setConnectionControlsEnabled(true);
+				if (isConfigurationMode) setConfigurationControlEnabled(true);
 			});
 			logServiceSubscribeButtonCellElement.append(logServiceSubscribeButtonElement);
 			tableRowElement.append(logServiceSubscribeButtonCellElement);
@@ -368,6 +491,9 @@ async function init() {
 		// System Service
 		if (connectionConfig.services.systemService != undefined) {
 			document.getElementById('button_system_service_set_operation_mode').addEventListener('click', async () => {
+				setConnectionControlsEnabled(false);
+				setConfigurationControlEnabled(false);
+
 				let selectedValue;
 				document.getElementsByName('input_radio_system_service_operation_mode').forEach((element) => {
 					if (element.checked) selectedValue = element.value;
@@ -378,23 +504,67 @@ async function init() {
 				}
 				catch (error) {
 					//TODO: エラーを見やすく表示
-					setControlsEnabled(true);
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
 					throw error;
 				}
 				if (response > 0) {
 					//TODO: エラーを見やすく表示
-					setControlsEnabled(true);
+					document.getElementById('value_system_service_response').innerText = getStatusCodeText(response);
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
 					throw new Error(`Operation failed. Response code: ${getStatusCodeText(response)}`);
 				}
 				document.getElementById('value_system_service_operation_mode').innerText = selectedValue == 0 ? 'User Mode' : 'Configuration Mode';
 				document.getElementById('value_system_service_response').innerText = getStatusCodeText(response);
-				setControlsEnabled(true);
+				isConfigurationMode = selectedValue == 1;
+				setConnectionControlsEnabled(true);
+				if (isConfigurationMode) setConfigurationControlEnabled(true);
 			});
 			document.getElementById('button_system_service_get_operation_mode').addEventListener('click', async () => getOperationMode());
 			document.getElementById('button_system_service_get_response').addEventListener('click', async () => getSystemServiceResponse());
 		}
 		else {
 			document.getElementById('system_service_area').classList.add('hidden');
+		}
+
+		// BLE Service
+		if( connectionConfig.services.bleService != undefined) {
+			document.querySelectorAll('.ble_service_adv_interval_input').forEach((element) => element.addEventListener('input', checkAdvertiseIntervalInputs));
+			document.getElementById('button_ble_service_set_adv_interval').addEventListener('click', async () => {
+				setConnectionControlsEnabled(false);
+				setConfigurationControlEnabled(false);
+
+				let response;
+				const minValue = Number(document.getElementById('input_ble_service_adv_interval_min').value);
+				const maxValue = Number(document.getElementById('input_ble_service_adv_interval_max').value);
+				try {
+					response = await api.setAdvertiseInterval(minValue, maxValue);
+				}
+				catch (error) {
+					//TODO: エラーを見やすく表示
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw error;
+				}
+				if (response > 0) {
+					//TODO: エラーを見やすく表示
+					document.getElementById('value_ble_service_response').innerText = getStatusCodeText(response);
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw new Error(`Operation failed. Response code: ${getStatusCodeText(response)}`);
+				}
+				document.getElementById('value_ble_service_adv_interval_min').innerText = minValue;
+				document.getElementById('value_ble_service_adv_interval_max').innerText = maxValue;
+				document.getElementById('value_ble_service_response').innerText = getStatusCodeText(response);
+				setConnectionControlsEnabled(true);
+				if (isConfigurationMode) setConfigurationControlEnabled(true);
+			});
+			document.getElementById('button_ble_service_get_adv_interval').addEventListener('click', async () => getAdvertiseInterval());
+			document.getElementById('button_ble_service_get_response').addEventListener('click', async () => getBLEServiceResponse());
+		}
+		else {
+			document.getElementById('ble_service_area').classList.add('hidden');
 		}
 
 		// イベント登録
@@ -407,6 +577,7 @@ async function init() {
 		api.addEventListener('connection-established', async () => {
 			if (connectionConfig.services.systemService != undefined) {
 				await getOperationMode();
+				await getAdvertiseInterval();
 			}
 			startObserveButton.disabled = true;
 			connectButton.disabled = true;
@@ -416,7 +587,8 @@ async function init() {
 			startObserveButton.disabled = false;
 			connectButton.disabled = false;
 			disconnectButton.disabled = true;
-			setControlsEnabled(false);
+			setConnectionControlsEnabled(false);
+			setConfigurationControlEnabled(false);
 			document.querySelectorAll('.notification_checkbox').forEach((element) => element.checked = false);
 			document.querySelectorAll('.configuration_value').forEach((element) => element.innerText = '---');
 			document.getElementById('input_radio_system_service_operation_mode_user_mode').checked = true;

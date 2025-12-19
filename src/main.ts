@@ -9,6 +9,8 @@ import { InvalidStateError } from "./errors/invalid_state_error";
 import { Vector3 } from "./interfaces/vector3";
 import { OperationResult } from "./enums/operation_result";
 import { OPERATION_MODE, OperationMode } from "./enums/operation_mode";
+import { AdvertisementIntervalData } from "./interfaces/advertisement_interval_data";
+import { swapUint16Array } from "./utils/endian_converter";
 
 /**
  * Web Bluetoothを用いてIoTセンサモジュールを操作できるようになるWebAPI
@@ -959,6 +961,52 @@ export class IoTSensorModuleAPI extends EventTarget {
 		if (this.connectionConfig.services.systemService == undefined) throw new NotSupportedError('System Service is not supported on the connected device.');
 
 		return (await this.readCharacteristicValue(this.connectionConfig.services.systemService!.uuid, this.connectionConfig.services.systemService!.characteristics.response!.uuid)).getUint8(0) as OperationResult;
+	}
+
+	/**
+	 * BLEアドバタイズインターバルの設定値を取得する。
+	 * @return 現在のBLEアドバタイズインターバルの設定値。最小値と最大値（共にms）が含まれる。
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがBLEServiceをサポートしていない場合に投げられる。
+	 * @throws Error データの読み取り時に通信エラーが発生した場合に投げられる。
+	 */
+	public async getAdvertiseInterval(): Promise<AdvertisementIntervalData> {
+		if (this.connectionConfig.services.bleService == undefined) throw new NotSupportedError('BLE Service is not supported on the connected device.');
+
+		const rawValue: DataView<ArrayBufferLike> = await this.readCharacteristicValue(this.connectionConfig.services.bleService!.uuid, this.connectionConfig.services.bleService!.characteristics.advInterval!.uuid);
+		return {min: rawValue.getUint16(0) * 0.625 + 20, max: rawValue.getUint16(2) * 0.625 + 20};
+	}
+
+	/**
+	 * BLEアドバタイズインターバルの設定値を変更する。
+	 * @param min 新たなBLEアドバタイズインターバルの最小値（ms）
+	 * @param max 新たなBLEアドバタイズインターバルの最大値（ms）
+	 * @return IoTセンサモジュールから返された応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがBLEServiceをサポートしていない場合に投げられる。
+	 * @throws InvalidInputError 指定したアドバタイズインターバルの値が不正な場合に投げられる。
+	 * @throws Error データの書き込み時に通信エラーが発生した場合に投げられる。
+	 */
+	public async setAdvertiseInterval(min: number, max: number): Promise<OperationResult> {
+		if (this.connectionConfig.services.bleService == undefined) throw new NotSupportedError('BLE Service is not supported on the connected device.');
+		else if (min < 20 || min > 10240 || max < 20 || max > 10240) throw new InvalidInputError(`Advertise interval must be between 20ms and 10240ms.`);
+		else if (min % 0.625 != 0 || max % 0.625 != 0) throw new InvalidInputError(`Advertise interval must be multiple of 0.625ms.`);
+		else if (min > max) throw new InvalidInputError(`Minimum advertise interval must be less than or equal to maximum advertise interval.`);
+
+		const value: Uint16Array = new Uint16Array([Math.round((min - 20) / 0.625), Math.round((max - 20) / 0.625)]);
+		return await this.writeCharacteristicValue(this.connectionConfig.services.bleService!.uuid, this.connectionConfig.services.bleService!.characteristics.advInterval!.uuid, this.connectionConfig.services.bleService!.characteristics.response!.uuid, new Uint8Array(swapUint16Array(value).buffer));
+	}
+
+	/**
+	 * BLE Serviceの応答コードを取得する。
+	 * @return IoTセンサモジュールから返された応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがBLEServiceをサポートしていない場合に投げられる。
+	 * @throws Error データの読み取り時に通信エラーが発生した場合に投げられる。
+	 */
+	public async getBLEServiceResponse(): Promise<OperationResult> {
+		if (this.connectionConfig.services.bleService == undefined) throw new NotSupportedError('BLE Service is not supported on the connected device.');
+		return (await this.readCharacteristicValue(this.connectionConfig.services.bleService!.uuid, this.connectionConfig.services.bleService!.characteristics.response!.uuid)).getUint8(0) as OperationResult;
 	}
 }
 
