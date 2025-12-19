@@ -977,6 +977,52 @@ export class IoTSensorModuleAPI extends EventTarget {
 	}
 
 	/**
+	 * 現在のセンサーインターバルの設定値を取得する。
+	 * @return 現在のセンサーインターバルの設定値（s）
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがSensorServiceをサポートしていない場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError センサーインターバルの取得中に通信エラーが発生した場合に投げられる。
+	 */
+	public async getSensorInterval() : Promise<number> {
+		if (this.connectionConfig.services.sensorService == undefined) throw new NotSupportedError('Sensor Service is not supported on the connected device.');
+
+		return (await this.readCharacteristicValue(this.connectionConfig.services.sensorService!.uuid, this.connectionConfig.services.sensorService!.characteristics.interval!.uuid)).getUint16(0);
+	}
+
+	/**
+	 * センサーインターバルの設定値を変更する。
+	 * @param interval 新たなセンサーインターバルの設定値（s）
+	 * @return IoTセンサモジュールから返された応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがSensorServiceをサポートしていない場合に投げられる。
+	 * @throws InvalidInputError 指定したセンサーインターバルの値が不正な場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError センサーインターバルの設定中に通信エラーが発生した場合に投げられる。
+	 */
+	public async setSensorInterval(interval: number): Promise<OperationResult> {
+		if (this.connectionConfig.services.sensorService == undefined) throw new NotSupportedError('Sensor Service is not supported on the connected device.');
+		else if (interval < 1 || interval > 65535) throw new InvalidInputError('Sensor interval must be between 1 and 65535 seconds.');
+		else if (interval % 1 > 0) throw new InvalidInputError('Sensor interval must be an integer.');
+
+		return await this.writeCharacteristicValue(this.connectionConfig.services.sensorService!.uuid, this.connectionConfig.services.sensorService!.characteristics.interval!.uuid, this.connectionConfig.services.sensorService!.characteristics.response!.uuid, new Uint8Array([interval >> 8, interval & 0xff]));
+	}
+
+	/**
+	 * Sensor Serviceの応答コードを取得する。
+	 * @return IoTセンサモジュールから返された応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがSensorServiceをサポートしていない場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError 応答コードの取得中に通信エラーが発生した場合に投げられる。
+	 */
+	public async getSensorServiceResponse(): Promise<OperationResult> {
+		if (this.connectionConfig.services.sensorService == undefined) throw new NotSupportedError('Sensor Service is not supported on the connected device.');
+
+		return (await this.readCharacteristicValue(this.connectionConfig.services.sensorService!.uuid, this.connectionConfig.services.sensorService!.characteristics.response!.uuid)).getUint8(0) as OperationResult;
+	}
+
+	/**
 	 * BLEアドバタイズインターバルの設定値を取得する。
 	 * @return 現在のBLEアドバタイズインターバルの設定値。最小値と最大値（共にms）が含まれる。
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。

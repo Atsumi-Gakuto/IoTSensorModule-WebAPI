@@ -105,6 +105,45 @@
 			</table>
 		</div>
 
+		<div id="sensor_service_area">
+			<h4>Sensor Service</h4>
+			<table>
+				<tr>
+					<th>項目</th>
+					<th>設定入力</th>
+					<th>現在値</th>
+				</tr>
+				<tr>
+					<td>Sensor Interval</td>
+					<td>
+						<div class="flex_column">
+							<div class="flex_row">
+								<p><input id="input_sensor_service_sensor_interval" class="configuration_only_control" type="number" min="1" step="65535" disabled> s</p>
+								<button id="button_sensor_service_set_sensor_interval" class="configuration_only_control control_disabled" disabled>変更</button>
+							</div>
+							<p id="message_sensor_service_sensor_interval" class="message_ng hidden"></p>
+						</div>
+					</td>
+					<td>
+						<div class="flex_row">
+							<p><span id="value_sensor_service_sensor_interval" class="configuration_value">---</span> s</p>
+							<button id="button_sensor_service_get_sensor_interval" class="connection_only_control" disabled>取得</button>
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td>Response</td>
+					<td></td>
+					<td>
+						<div class="flex_row">
+							<span id="value_sensor_service_response" class="configuration_value">---</span>
+							<button id="button_sensor_service_get_response" class="connection_only_control" disabled>取得</button>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</div>
+
 		<div id="ble_service_area">
 			<table>
 				<h4>BLE Service</h4>

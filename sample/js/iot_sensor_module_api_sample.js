@@ -153,6 +153,80 @@ async function getSystemServiceResponse() {
 }
 
 /**
+ * センサーインターバルの設定入力が正しいかチェックする。
+ */
+function checkSensorIntervalInput() {
+	const value = document.getElementById('input_sensor_service_sensor_interval').value;
+	if (value < 1 || value > 65535) {
+		const messageElement = document.getElementById('message_sensor_service_sensor_interval');
+		messageElement.innerText = '入力値は1〜65535の範囲を超えてはいけません';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_sensor_service_set_sensor_interval');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else if(value % 1 > 0) {
+		const messageElement = document.getElementById('message_sensor_service_sensor_interval');
+		messageElement.innerText = '入力値は整数でなければなりません';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_sensor_service_set_sensor_interval');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else {
+		const messageElement = document.getElementById('message_sensor_service_sensor_interval');
+		messageElement.innerText = '';
+		messageElement.classList.add('hidden');
+		const buttonElement = document.getElementById('button_sensor_service_set_sensor_interval');
+		buttonElement.classList.remove('control_disabled');
+		buttonElement.disabled = false;
+	}
+}
+
+/**
+ * センサーインターバルの現在値を取得して表示する。
+ */
+async function getSensorInterval() {
+	setConnectionControlsEnabled(false);
+	setConfigurationControlEnabled(false);
+
+	let interval;
+	try {
+		interval = await api.getSensorInterval();
+	}
+	catch (error) {
+		//TODO: エラーを見やすく表示
+		setConnectionControlsEnabled(true);
+		if (isConfigurationMode) setConfigurationControlEnabled(true);
+		throw error;
+	}
+	document.getElementById('value_sensor_service_sensor_interval').innerText = interval;
+	setConnectionControlsEnabled(true);
+	if (isConfigurationMode) setConfigurationControlEnabled(true);
+}
+
+/**
+ * Sensor Serviceからの応答コードを取得して表示する。
+ */
+async function getSensorServiceResponse() {
+	setConnectionControlsEnabled(false);
+	setConfigurationControlEnabled(false);
+	let response;
+	try {
+		response = await api.getSensorServiceResponse();
+	}
+	catch (error) {
+		//TODO: エラーを見やすく表示
+		setConnectionControlsEnabled(true);
+		if (isConfigurationMode) setConfigurationControlEnabled(true);
+		throw error;
+	}
+	document.getElementById('value_sensor_service_response').innerText = getStatusCodeText(response);
+	setConnectionControlsEnabled(true);
+	if (isConfigurationMode) setConfigurationControlEnabled(true);
+}
+
+/**
  * アドバタイズインターバルの設定入力が正しいかチェックする。
  */
 function checkAdvertiseIntervalInputs() {
@@ -528,8 +602,45 @@ async function init() {
 			document.getElementById('system_service_area').classList.add('hidden');
 		}
 
+		// Sensor Service
+		if (connectionConfig.services.sensorService != undefined) {
+			document.getElementById('input_sensor_service_sensor_interval').addEventListener('input', checkSensorIntervalInput);
+			document.getElementById('button_sensor_service_set_sensor_interval').addEventListener('click', async () => {
+				setConnectionControlsEnabled(false);
+				setConfigurationControlEnabled(false);
+
+				let response;
+				const intervalValue = Number(document.getElementById('input_sensor_service_sensor_interval').value);
+				try {
+					response = await api.setSensorInterval(intervalValue);
+				}
+				catch (error) {
+					//TODO: エラーを見やすく表示
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw error;
+				}
+				if (response > 0) {
+					//TODO: エラーを見やすく表示
+					document.getElementById('value_sensor_service_response').innerText = getStatusCodeText(response);
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw new Error(`Operation failed. Response code: ${getStatusCodeText(response)}`);
+				}
+				document.getElementById('value_sensor_service_sensor_interval').innerText = intervalValue;
+				document.getElementById('value_sensor_service_response').innerText = getStatusCodeText(response);
+				setConnectionControlsEnabled(true);
+				if (isConfigurationMode) setConfigurationControlEnabled(true);
+			});
+			document.getElementById('button_sensor_service_get_sensor_interval').addEventListener('click', async () => getSensorInterval());
+			document.getElementById('button_sensor_service_get_response').addEventListener('click', async () => getSensorServiceResponse());
+		}
+		else {
+			document.getElementById('sensor_service_area').classList.add('hidden');
+		}
+
 		// BLE Service
-		if( connectionConfig.services.bleService != undefined) {
+		if (connectionConfig.services.bleService != undefined) {
 			document.querySelectorAll('.ble_service_adv_interval_input').forEach((element) => element.addEventListener('input', checkAdvertiseIntervalInputs));
 			document.getElementById('button_ble_service_set_adv_interval').addEventListener('click', async () => {
 				setConnectionControlsEnabled(false);
@@ -577,6 +688,7 @@ async function init() {
 		api.addEventListener('connection-established', async () => {
 			if (connectionConfig.services.systemService != undefined) {
 				await getOperationMode();
+				await getSensorInterval();
 				await getAdvertiseInterval();
 			}
 			startObserveButton.disabled = true;
