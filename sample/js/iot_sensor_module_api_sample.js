@@ -476,6 +476,61 @@ async function getTargetExpression() {
 }
 
 /**
+ * アクティブスロット登録の入力が正しいかどうかをチェックする。
+ */
+function checkExpressionActiveSlotInput() {
+	const maxTriggers = api.getNumberOfTriggerData();
+	const value = document.getElementById('input_expression_service_active_slot').value;
+	if (value < 0 || value > maxTriggers - 1) {
+		const messageElement = document.getElementById('message_expression_service_active_slot');
+		messageElement.innerText = `入力値は0〜${maxTriggers - 1}の範囲を超えてはいけません`;
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_expression_service_set_active_slot');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else if (value % 1 > 0) {
+		const messageElement = document.getElementById('message_expression_service_active_slot');
+		messageElement.innerText = '入力値は整数でなければなりません';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_expression_service_set_active_slot');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else {
+		const messageElement = document.getElementById('message_expression_service_active_slot');
+		messageElement.innerText = '';
+		messageElement.classList.add('hidden');
+		const buttonElement = document.getElementById('button_expression_service_set_active_slot');
+		buttonElement.classList.remove('control_disabled');
+		buttonElement.disabled = false;
+	}
+}
+
+/**
+ * 現在アクティブなスロット番号を取得して表示する。
+ */
+async function getExpressionActiveSlot() {
+	setConnectionControlsEnabled(false);
+	setConfigurationControlEnabled(false);
+
+	let slot;
+	try {
+		slot = await api.getExpressionActiveSlot();
+	}
+	catch (error) {
+		// TODO: エラーを見やすく表示
+		setConnectionControlsEnabled(true);
+		if (isConfigurationMode) setConfigurationControlEnabled(true);
+		throw error;
+	}
+
+	document.getElementById('value_expression_service_active_slot').innerText = slot == 255 ? '未登録' : slot;
+	setConnectionControlsEnabled(true);
+	if (isConfigurationMode) setConfigurationControlEnabled(true);
+}
+
+/**
  * Expression Serviceからの応答コードを取得して表示する。
  */
 async function getExpressionServiceResponse() {
@@ -785,6 +840,7 @@ async function init() {
 					checkAdvertiseChannelMaskInputs();
 					checkAdvertiseTxPowerInput();
 					checkTargetExpressionInput();
+					checkExpressionActiveSlotInput();
 				}
 				setConnectionControlsEnabled(true);
 				if (isConfigurationMode) setConfigurationControlEnabled(true);
@@ -969,10 +1025,44 @@ async function init() {
 
 				document.getElementById('value_expression_service_target_expression').innerText = expressionIdValue;
 				document.getElementById('value_expression_service_response').innerText = getStatusCodeText(response);
+				await getExpressionActiveSlot();
 				setConnectionControlsEnabled(true);
 				if (isConfigurationMode) setConfigurationControlEnabled(true);
 			});
 			document.getElementById('button_expression_service_get_target_expression').addEventListener('click', async () => getTargetExpression());
+
+			// Expression Active Slot
+			document.getElementById('input_expression_service_active_slot').addEventListener('input', checkExpressionActiveSlotInput);
+			document.getElementById('button_expression_service_set_active_slot').addEventListener('click', async () => {
+				setConnectionControlsEnabled(false);
+				setConfigurationControlEnabled(false);
+
+				let response;
+				const slotValue = Number(document.getElementById('input_expression_service_active_slot').value);
+				try {
+					response = await api.setExpressionActiveSlot(slotValue);
+				}
+				catch (error) {
+					// TODO: エラーを見やすく表示
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw error;
+				}
+				if (response > 0) {
+					// TODO: エラーを見やすく表示
+					document.getElementById('value_expression_service_response').innerText = getStatusCodeText(response);
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw new Error(`Operation failed. Response code: ${getStatusCodeText(response)}`);
+				}
+
+				document.getElementById('value_expression_service_active_slot').innerText = slotValue;
+				document.getElementById('value_expression_service_response').innerText = getStatusCodeText(response);
+				setConnectionControlsEnabled(true);
+				if (isConfigurationMode) setConfigurationControlEnabled(true);
+			});
+			document.getElementById('button_expression_service_get_active_slot').addEventListener('click', async () => getExpressionActiveSlot());
+
 			document.getElementById('button_expression_service_get_response').addEventListener('click', async () => getExpressionServiceResponse());
 		}
 
@@ -991,6 +1081,7 @@ async function init() {
 				await getAdvertiseChannelMask();
 				await getAdvertiseTxPower();
 				await getTargetExpression();
+				await getExpressionActiveSlot();
 			}
 			startObserveButton.disabled = true;
 			connectButton.disabled = true;
