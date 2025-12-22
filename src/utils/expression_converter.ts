@@ -153,7 +153,7 @@ export function tokenToUint8Array(tokens: ExpressionElement[]): Uint8Array {
 					}
 				}
 
-				bleValue.push(0x05, 0x01);
+				bleValue.push(0x06, 0x01);
 				for (let i = 3; i >= 0; i--) {
 					let byteValue: number = 0;
 					for (let j = 7; j >= 0; j--) {
@@ -167,13 +167,13 @@ export function tokenToUint8Array(tokens: ExpressionElement[]): Uint8Array {
 				if (token.value < 0 || token.value > 0xff) throw new ExpressionParseError(`Sensor index must be between 0 and 255: ${token.value}`);
 				else if (token.value % 1 != 0) throw new ExpressionParseError(`Sensor index must be an integer: ${token.value}`);
 
-				bleValue.push(0x02, 0x02, token.value);
+				bleValue.push(0x03, 0x02, token.value);
 				break;
 			case "OPERATOR":
 				if (token.value < 0 || token.value > 15) throw new ExpressionParseError(`Operator code must be between 0 and 15: ${token.value}`);
 				else if (token.value % 1 != 0) throw new ExpressionParseError(`Operator code must be an integer: ${token.value}`);
 
-				bleValue.push(0x02, 0x03, token.value);
+				bleValue.push(0x03, 0x03, token.value);
 				break;
 		}
 	});
@@ -189,12 +189,13 @@ export function tokenToUint8Array(tokens: ExpressionElement[]): Uint8Array {
  */
 export function uint8ArrayToToken(bleArray: Uint8Array): ExpressionElement[] {
 	const tokens: ExpressionElement[] = [];
-	let tokenLength: number = -1;
+	let tokenLength: number = 0;
 	let tokenType: number = 0;
 	let value: number[] = [];
 	for (let i = 0; i < bleArray.length; i++) {
-		if (tokenLength == -1) {
+		if (tokenLength == 0) {
 			const length: number = bleArray[i];
+			if (length == 0) return tokens;
 			tokenLength = length;
 		}
 		else if (tokenType == 0) {
@@ -204,7 +205,7 @@ export function uint8ArrayToToken(bleArray: Uint8Array): ExpressionElement[] {
 		}
 		else {
 			value.push(bleArray[i]);
-			if (tokenLength == 0) {
+			if (tokenLength == 1) {
 				const token: ExpressionElement = {type: "VALUE", value: 0};
 				token.type = EXPRESSION_ELEMENT_TYPE[tokenType - 1];
 				if (token.type == "VALUE") {
