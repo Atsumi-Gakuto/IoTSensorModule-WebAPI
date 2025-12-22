@@ -531,6 +531,55 @@ async function getExpressionActiveSlot() {
 }
 
 /**
+ * 条件式入力が正しいかどうかをチェックする。
+ */
+function checkExpressionInput() {
+	const expressionString = document.getElementById('input_expression_service_expression').value;
+	try {
+		api.expressionStringToToken(expressionString);
+	}
+	catch (error) {
+		const messageElement = document.getElementById('message_expression_service_expression');
+		messageElement.innerText = '不明なトークンです';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_expression_service_set_expression');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+		return;
+	}
+
+	const messageElement = document.getElementById('message_expression_service_expression');
+	messageElement.innerText = '';
+	messageElement.classList.add('hidden');
+	const buttonElement = document.getElementById('button_expression_service_set_expression');
+	buttonElement.classList.remove('control_disabled');
+	buttonElement.disabled = false;
+}
+
+/**
+ * 現在の条件式の本体を取得して表示する。
+ */
+async function getExpression() {
+	setConnectionControlsEnabled(false);
+	setConfigurationControlEnabled(false);
+
+	let expressionString;
+	try {
+		expressionString = api.tokenToExpressionString(await api.getExpression());
+	}
+	catch (error) {
+		// TODO: エラーを見やすく表示
+		setConnectionControlsEnabled(true);
+		if (isConfigurationMode) setConfigurationControlEnabled(true);
+		throw error;
+	}
+
+	document.getElementById('value_expression_service_expression').value = expressionString;
+	setConnectionControlsEnabled(true);
+	if (isConfigurationMode) setConfigurationControlEnabled(true);
+}
+
+/**
  * Expression Serviceからの応答コードを取得して表示する。
  */
 async function getExpressionServiceResponse() {
@@ -841,6 +890,7 @@ async function init() {
 					checkAdvertiseTxPowerInput();
 					checkTargetExpressionInput();
 					checkExpressionActiveSlotInput();
+					checkExpressionInput();
 				}
 				setConnectionControlsEnabled(true);
 				if (isConfigurationMode) setConfigurationControlEnabled(true);
@@ -1026,6 +1076,7 @@ async function init() {
 				document.getElementById('value_expression_service_target_expression').innerText = expressionIdValue;
 				document.getElementById('value_expression_service_response').innerText = getStatusCodeText(response);
 				await getExpressionActiveSlot();
+				await getExpression();
 				setConnectionControlsEnabled(true);
 				if (isConfigurationMode) setConfigurationControlEnabled(true);
 			});
@@ -1063,6 +1114,38 @@ async function init() {
 			});
 			document.getElementById('button_expression_service_get_active_slot').addEventListener('click', async () => getExpressionActiveSlot());
 
+			// Expression
+			document.getElementById('input_expression_service_expression').addEventListener('input', checkExpressionInput);
+			document.getElementById('button_expression_service_set_expression').addEventListener('click', async () => {
+				setConnectionControlsEnabled(false);
+				setConfigurationControlEnabled(false);
+
+				let response;
+				const expressionTokens = api.expressionStringToToken(document.getElementById('input_expression_service_expression').value);
+				try {
+					response = await api.setExpression(expressionTokens);
+				}
+				catch (error) {
+					// TODO: エラーを見やすく表示
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw error;
+				}
+				if (response > 0) {
+					// TODO: エラーを見やすく表示
+					document.getElementById('value_expression_service_response').innerText = getStatusCodeText(response);
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw new Error(`Operation failed. Response code: ${getStatusCodeText(response)}`);
+				}
+
+				document.getElementById('value_expression_service_expression').value = api.tokenToExpressionString(expressionTokens);
+				document.getElementById('value_expression_service_response').innerText = getStatusCodeText(response);
+				setConnectionControlsEnabled(true);
+				if (isConfigurationMode) setConfigurationControlEnabled(true);
+			});
+			document.getElementById('button_expression_service_get_expression').addEventListener('click', async () => getExpression());
+
 			document.getElementById('button_expression_service_get_response').addEventListener('click', async () => getExpressionServiceResponse());
 		}
 
@@ -1082,6 +1165,7 @@ async function init() {
 				await getAdvertiseTxPower();
 				await getTargetExpression();
 				await getExpressionActiveSlot();
+				await getExpression();
 			}
 			startObserveButton.disabled = true;
 			connectButton.disabled = true;

@@ -11,6 +11,7 @@ import { OperationResult } from "./enums/operation_result";
 import { OPERATION_MODE, OperationMode } from "./enums/operation_mode";
 import { AdvertisementIntervalData } from "./interfaces/advertisement_interval_data";
 import { swapUint16Array } from "./utils/endian_converter";
+import { ExpressionElement, stringToToken, tokenToString, tokenToUint8Array, uint8ArrayToToken } from "./utils/expression_converter";
 
 /**
  * Web Bluetoothを用いてIoTセンサモジュールを操作できるようになるWebAPI
@@ -1214,6 +1215,57 @@ export class IoTSensorModuleAPI extends EventTarget {
 		if (this.connectionConfig.services.expressionService == undefined) throw new NotSupportedError('Expression Service is not supported on the connected device.');
 
 		return (await this.readCharacteristicValue(this.connectionConfig.services.expressionService!.uuid, this.connectionConfig.services.expressionService!.characteristics.response!.uuid)).getUint8(0) as OperationResult;
+	}
+
+	/**
+	 * 現在編集中の条件式を取得する。
+	 * @return 現在編集中の条件式データ。人間が判別しやすい形式に変換する場合は`tokenToExpressionString()`を使用する。
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがExpressionServiceをサポートしていない場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError 条件式データの取得中に通信エラーが発生した場合に投げられる。
+	 * @throws ExpressionParseError 不明なトークンが検出された場合
+	 */
+	public async getExpression(): Promise<ExpressionElement[]> {
+		if (this.connectionConfig.services.expressionService == undefined) throw new NotSupportedError('Expression Service is not supported on the connected device.');
+
+		return uint8ArrayToToken(new Uint8Array((await this.readCharacteristicValue(this.connectionConfig.services.expressionService!.uuid, this.connectionConfig.services.expressionService!.characteristics.expression!.uuid)).buffer));
+	}
+
+	/**
+	 * 現在のターゲット条件式を変更する。
+	 * @param 設定する条件式のデータ。人間が判別しやすい形式から変換する場合は`expressionStringToToken()`を使用する。
+	 * @return IoTセンサモジュールから返された応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがExpressionServiceをサポートしていない場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError 条件式データの設定中に通信エラーが発生した場合に投げられる。
+	 * @throws ExpressionParseError 不明なトークンが検出された場合
+	 */
+	public async setExpression(expression: ExpressionElement[]): Promise<OperationResult> {
+		if (this.connectionConfig.services.expressionService == undefined) throw new NotSupportedError('Expression Service is not supported on the connected device.');
+
+		return await this.writeCharacteristicValue(this.connectionConfig.services.expressionService!.uuid, this.connectionConfig.services.expressionService!.characteristics.expression!.uuid, this.connectionConfig.services.expressionService!.characteristics.response!.uuid, tokenToUint8Array(expression));
+	}
+
+	/**
+	 * 人間が判読可能な条件式表現の文字列からトークン分解して、その配列を返す。
+	 * @param expressionString トークン化を行う条件式の文字列
+	 * @return トークン分解を行った条件式のトークン配列
+	 * @throws ExpressionParseError 不明なトークンが検出された場合
+	 */
+	public expressionStringToToken(expressionString: string): ExpressionElement[] {
+		return stringToToken(expressionString);
+	}
+
+	/**
+	 * 条件式のトークン配列を人間が判読可能な条件式表現の文字列に変換して返す。
+	 * @param tokens トークン化された条件式の配列
+	 * @return 人間が判読可能な条件式表現の文字列
+	 * @throws ExpressionParseError 不明なトークンが検出された場合
+	 */
+	public tokenToExpressionString(tokens: ExpressionElement[]): string {
+		return tokenToString(tokens);
 	}
 }
 
