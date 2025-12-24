@@ -1204,20 +1204,6 @@ export class IoTSensorModuleAPI extends EventTarget {
 	}
 
 	/**
-	 * Expression Serviceの応答コードを取得する。
-	 * @return IoTセンサモジュールから返された応答コード
-	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
-	 * @throws NotSupportedError 接続先のIoTセンサモジュールがExpressionServiceをサポートしていない場合に投げられる。
-	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
-	 * @throws NetworkError 応答コードの取得中に通信エラーが発生した場合に投げられる。
-	 */
-	public async getExpressionServiceResponse(): Promise<OperationResult> {
-		if (this.connectionConfig.services.expressionService == undefined) throw new NotSupportedError('Expression Service is not supported on the connected device.');
-
-		return (await this.readCharacteristicValue(this.connectionConfig.services.expressionService!.uuid, this.connectionConfig.services.expressionService!.characteristics.response!.uuid)).getUint8(0) as OperationResult;
-	}
-
-	/**
 	 * 現在編集中の条件式を取得する。
 	 * @return 現在編集中の条件式データ。人間が判別しやすい形式に変換する場合は`tokenToExpressionString()`を使用する。
 	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
@@ -1266,6 +1252,70 @@ export class IoTSensorModuleAPI extends EventTarget {
 	 */
 	public tokenToExpressionString(tokens: ExpressionElement[]): string {
 		return tokenToString(tokens);
+	}
+
+	/**
+	 * 現在編集中の条件式を別の条件式スロットへコピーする。
+	 * @param destination コピー先の条件式スロットのインデックス番号。指定された条件式スロットないのデータは全て上書きされる。
+	 * @return IoTセンサモジュールから返された応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがExpressionServiceをサポートしていない場合に投げられる。
+	 * @throws InvalidInputError 指定された条件式スロットが不正な場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError 条件式スロットへのコピー中に通信エラーが発生した場合に投げられる。
+	 */
+	public async copyExpression(destination: number): Promise<OperationResult> {
+		if (this.connectionConfig.services.expressionService == undefined) throw new NotSupportedError('Expression Service is not supported on the connected device.');
+		else if (destination < 0 || destination > this.connectionConfig.numberOfTriggerData - 1) throw new InvalidInputError(`Destination expression slot must be between 0 and ${this.connectionConfig.numberOfTriggerData - 1}.`);
+		else if (destination % 1 > 0) throw new InvalidInputError('Destination expression slot must be an integer.');
+
+		return await this.writeCharacteristicValue(this.connectionConfig.services.expressionService!.uuid, this.connectionConfig.services.expressionService!.characteristics.copy!.uuid, this.connectionConfig.services.expressionService!.characteristics.response!.uuid, new Uint8Array([destination]));
+	}
+
+	/**
+	 * 現在編集中の条件式を別の条件式スロットへ移動させる。今の条件式スロットからはデータが消える。
+	 * @param destination 移動先の条件式スロットのインデックス番号。指定された条件式スロットないのデータは全て上書きされる。
+	 * @return IoTセンサモジュールから返された応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがExpressionServiceをサポートしていない場合に投げられる。
+	 * @throws InvalidInputError 指定された条件式スロットが不正な場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError 条件式スロットへの移動中に通信エラーが発生した場合に投げられる。
+	 */
+	public async moveExpression(destination: number): Promise<OperationResult> {
+		if (this.connectionConfig.services.expressionService == undefined) throw new NotSupportedError('Expression Service is not supported on the connected device.');
+		else if (destination < 0 || destination > this.connectionConfig.numberOfTriggerData - 1) throw new InvalidInputError(`Destination expression slot must be between 0 and ${this.connectionConfig.numberOfTriggerData - 1}.`);
+		else if (destination % 1 > 0) throw new InvalidInputError('Destination expression slot must be an integer.');
+
+		return await this.writeCharacteristicValue(this.connectionConfig.services.expressionService!.uuid, this.connectionConfig.services.expressionService!.characteristics.move!.uuid, this.connectionConfig.services.expressionService!.characteristics.response!.uuid, new Uint8Array([destination]));
+	}
+
+	/**
+	 * 現在編集中の条件式を削除する。確認は設けない。Web実装側でやってください。
+	 * @return IoTセンサモジュールから返された応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがExpressionServiceをサポートしていない場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError 条件式の削除中に通信エラーが発生した場合に投げられる。
+	 */
+	public async deleteExpression(): Promise<OperationResult> {
+		if (this.connectionConfig.services.expressionService == undefined) throw new NotSupportedError('Expression Service is not supported on the connected device.');
+
+		return await this.writeCharacteristicValue(this.connectionConfig.services.expressionService!.uuid, this.connectionConfig.services.expressionService!.characteristics.delete!.uuid, this.connectionConfig.services.expressionService!.characteristics.response!.uuid, new Uint8Array([1]));
+	}
+
+	/**
+	 * Expression Serviceの応答コードを取得する。
+	 * @return IoTセンサモジュールから返された応答コード
+	 * @throws InvalidStateError デバイスと接続されていない場合やデバイス上にGATTサーバーが見つからない場合に投げられる。
+	 * @throws NotSupportedError 接続先のIoTセンサモジュールがExpressionServiceをサポートしていない場合に投げられる。
+	 * @throws SecurityError セキュリティ上の懸念点によりWeb Bluetoothの利用が許可されていない場合に投げられる。localhostやhttps以外でのアクセス時などで発生する。
+	 * @throws NetworkError 応答コードの取得中に通信エラーが発生した場合に投げられる。
+	 */
+	public async getExpressionServiceResponse(): Promise<OperationResult> {
+		if (this.connectionConfig.services.expressionService == undefined) throw new NotSupportedError('Expression Service is not supported on the connected device.');
+
+		return (await this.readCharacteristicValue(this.connectionConfig.services.expressionService!.uuid, this.connectionConfig.services.expressionService!.characteristics.response!.uuid)).getUint8(0) as OperationResult;
 	}
 }
 

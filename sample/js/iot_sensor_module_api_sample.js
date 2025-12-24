@@ -580,6 +580,86 @@ async function getExpression() {
 }
 
 /**
+ * 条件式コピー先の入力が正しいかどうかをチェックする。
+ */
+function checkCopyExpressionInput() {
+	const maxTriggers = api.getNumberOfTriggerData();
+	const value = document.getElementById('input_expression_service_copy').value;
+	if (value < 0 || value > maxTriggers - 1) {
+		const messageElement = document.getElementById('message_expression_service_copy');
+		messageElement.innerText = `入力値は0〜${maxTriggers - 1}の範囲を超えてはいけません`;
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_expression_service_copy');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else if (value % 1 > 0) {
+		const messageElement = document.getElementById('message_expression_service_copy');
+		messageElement.innerText = '入力値は整数でなければなりません';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_expression_service_copy');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else if(value == Number(document.getElementById('value_expression_service_target_expression').innerText)) {
+		const messageElement = document.getElementById('message_expression_service_copy');
+		messageElement.innerText = 'コピー元とコピー先を同じにすることはできません';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_expression_service_copy');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else {
+		const messageElement = document.getElementById('message_expression_service_copy');
+		messageElement.innerText = '';
+		messageElement.classList.add('hidden');
+		const buttonElement = document.getElementById('button_expression_service_copy');
+		buttonElement.classList.remove('control_disabled');
+		buttonElement.disabled = false;
+	}
+}
+
+/**
+ * 条件式移動先の入力が正しいかどうかをチェックする。
+ */
+function checkMoveExpressionInput() {
+	const maxTriggers = api.getNumberOfTriggerData();
+	const value = document.getElementById('input_expression_service_move').value;
+	if (value < 0 || value > maxTriggers - 1) {
+		const messageElement = document.getElementById('message_expression_service_move');
+		messageElement.innerText = `入力値は0〜${maxTriggers - 1}の範囲を超えてはいけません`;
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_expression_service_move');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else if (value % 1 > 0) {
+		const messageElement = document.getElementById('message_expression_service_move');
+		messageElement.innerText = '入力値は整数でなければなりません';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_expression_service_move');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else if(value == Number(document.getElementById('value_expression_service_target_expression').innerText)) {
+		const messageElement = document.getElementById('message_expression_service_move');
+		messageElement.innerText = 'コピー元とコピー先を同じにすることはできません';
+		messageElement.classList.remove('hidden');
+		const buttonElement = document.getElementById('button_expression_service_move');
+		buttonElement.classList.add('control_disabled');
+		buttonElement.disabled = true;
+	}
+	else {
+		const messageElement = document.getElementById('message_expression_service_move');
+		messageElement.innerText = '';
+		messageElement.classList.add('hidden');
+		const buttonElement = document.getElementById('button_expression_service_move');
+		buttonElement.classList.remove('control_disabled');
+		buttonElement.disabled = false;
+	}
+}
+
+/**
  * Expression Serviceからの応答コードを取得して表示する。
  */
 async function getExpressionServiceResponse() {
@@ -891,6 +971,8 @@ async function init() {
 					checkTargetExpressionInput();
 					checkExpressionActiveSlotInput();
 					checkExpressionInput();
+					checkCopyExpressionInput();
+					checkMoveExpressionInput();
 				}
 				setConnectionControlsEnabled(true);
 				if (isConfigurationMode) setConfigurationControlEnabled(true);
@@ -1145,6 +1227,100 @@ async function init() {
 				if (isConfigurationMode) setConfigurationControlEnabled(true);
 			});
 			document.getElementById('button_expression_service_get_expression').addEventListener('click', async () => getExpression());
+
+			// Copy Expression
+			document.getElementById('input_expression_service_copy').addEventListener('input', checkCopyExpressionInput);
+			document.getElementById('button_expression_service_copy').addEventListener('click', async () => {
+				setConnectionControlsEnabled(false);
+				setConfigurationControlEnabled(false);
+
+				let response;
+				const targetIdValue = Number(document.getElementById('input_expression_service_copy').value);
+				try {
+					response = await api.copyExpression(targetIdValue);
+				}
+				catch (error) {
+					// TODO: エラーを見やすく表示
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw error;
+				}
+				if (response > 0) {
+					// TODO: エラーを見やすく表示
+					document.getElementById('value_expression_service_response').innerText = getStatusCodeText(response);
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw new Error(`Operation failed. Response code: ${getStatusCodeText(response)}`);
+				}
+
+				document.getElementById('value_expression_service_response').innerText = getStatusCodeText(response);
+				setConnectionControlsEnabled(true);
+				if (isConfigurationMode) setConfigurationControlEnabled(true);
+			});
+
+			// Move Expression
+			document.getElementById('input_expression_service_move').addEventListener('input', checkMoveExpressionInput);
+			document.getElementById('button_expression_service_move').addEventListener('click', async () => {
+				setConnectionControlsEnabled(false);
+				setConfigurationControlEnabled(false);
+
+				let response;
+				const targetIdValue = Number(document.getElementById('input_expression_service_move').value);
+				try {
+					response = await api.moveExpression(targetIdValue);
+				}
+				catch (error) {
+					// TODO: エラーを見やすく表示
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw error;
+				}
+				if (response > 0) {
+					// TODO: エラーを見やすく表示
+					document.getElementById('value_expression_service_response').innerText = getStatusCodeText(response);
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+					throw new Error(`Operation failed. Response code: ${getStatusCodeText(response)}`);
+				}
+
+				document.getElementById('value_expression_service_response').innerText = getStatusCodeText(response);
+				await getExpressionActiveSlot();
+				await getExpression();
+				setConnectionControlsEnabled(true);
+				if (isConfigurationMode) setConfigurationControlEnabled(true);
+			});
+
+			// Delete Expression
+			document.getElementById('button_expression_service_delete').addEventListener('click', async () => {
+				if (confirm(`スロット${document.getElementById('value_expression_service_target_expression').innerText}の条件式を削除します。よろしいですか？`)) {
+					setConnectionControlsEnabled(false);
+					setConfigurationControlEnabled(false);
+
+					let response;
+					try {
+						response = await api.deleteExpression();
+					}
+					catch (error) {
+						// TODO: エラーを見やすく表示
+						setConnectionControlsEnabled(true);
+						if (isConfigurationMode) setConfigurationControlEnabled(true);
+						throw error;
+					}
+					if (response > 0) {
+						// TODO: エラーを見やすく表示
+						document.getElementById('value_expression_service_response').innerText = getStatusCodeText(response);
+						setConnectionControlsEnabled(true);
+						if (isConfigurationMode) setConfigurationControlEnabled(true);
+						throw new Error(`Operation failed. Response code: ${getStatusCodeText(response)}`);
+					}
+
+					document.getElementById('value_expression_service_response').innerText = getStatusCodeText(response);
+					await getExpressionActiveSlot();
+					await getExpression();
+					setConnectionControlsEnabled(true);
+					if (isConfigurationMode) setConfigurationControlEnabled(true);
+				}
+			});
 
 			document.getElementById('button_expression_service_get_response').addEventListener('click', async () => getExpressionServiceResponse());
 		}
