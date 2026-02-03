@@ -689,7 +689,7 @@ async function init() {
 	// IoTセンサモジュールの情報取得
 	let connectionConfig;
 	try {
-		const response = await fetch('./data/thunderboard_efr32bg22.json');
+		const response = await fetch('./data/pluslab_iotsm.json');
 		console.info('Connection config fetched.');
 		connectionConfig = await response.json();
 		console.info('Connection config parsed.');

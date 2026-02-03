@@ -1,0 +1,204 @@
+{
+	"deviceName": "IoTSM",
+	"companyId": 65535,
+	"numberOfTriggerData": 16,
+	"services": {
+		"dataService": {
+			"uuid": "73e03f6f-3209-4b87-b11a-f9d5e3285b6b",
+			"characteristics": {
+				"acceleration": {
+					"uuid": "56457b30-1190-4454-b73b-db827afc2a9f",
+					"dataType": "float32_vec3",
+					"unit": "m/s²"
+				},
+				"gyroscope": {
+					"uuid": "12cf5a1f-1170-467d-8542-a11db867bb1c",
+					"dataType": "float32_vec3",
+					"unit": "rad/s"
+				},
+				"geomagnetism": {
+					"uuid": "5e1f1982-32e5-4dc6-93f7-e044535c3411",
+					"dataType": "uint16_vec3",
+					"unit": "G"
+				},
+				"illumination": {
+					"uuid": "6b4aac2c-2d11-4178-af75-f78408d7bf3e",
+					"dataType": "float32",
+					"unit": "lux"
+				},
+				"temperature": {
+					"uuid": "f9a81f3d-78d5-4b9d-9649-ed5b00aea159",
+					"dataType": "float32",
+					"unit": "°C"
+				},
+				"humidity": {
+					"uuid": "1b17c5c0-3241-4383-968b-22698bfa6be1",
+					"dataType": "float32",
+					"unit": "%"
+				},
+				"pressure": {
+					"uuid": "34a545e8-5255-4665-898e-3931e6b9cb46",
+					"dataType": "float32",
+					"unit": "hPa"
+				},
+				"visibleLight": {
+					"uuid": "7a796fd5-f44e-4a08-9ab3-535a58b4effc",
+					"dataType": "uint16",
+					"unit": "lux"
+				},
+				"infraredLight": {
+					"uuid": "dde39966-d751-45ec-a80e-8c2176b29b0b",
+					"dataType": "uint16",
+					"unit": "lux"
+				},
+				"uvIndex": {
+					"uuid": "147a6977-08ce-40cd-a83f-b1306fb00c35",
+					"dataType": "uint8",
+					"unit": ""
+				}
+			}
+		},
+		"logService": {
+			"uuid": "828d3ea9-65ba-494e-bd9f-ab9defde92db",
+			"characteristics": {
+				"acceleration": {
+					"uuid": "80a66d27-1a7e-4780-b977-30c5cfddbd12",
+					"dataType": "float32_vec3",
+					"logCount": 8,
+					"unit": "m/s²"
+				},
+				"gyroscope": {
+					"uuid": "0394c661-61e2-4914-99fd-c8a5bffbbcf7",
+					"dataType": "float32_vec3",
+					"logCount": 8,
+					"unit": "rad/s"
+				},
+				"geomagnetism": {
+					"uuid": "9db5eab9-ade9-413e-8fd4-40abc4ebd492",
+					"dataType": "uint16_vec3",
+					"logCount": 8,
+					"unit": "G"
+				},
+				"illumination": {
+					"uuid": "c1be498b-17a5-477f-af28-9fd7308279ef",
+					"dataType": "float32",
+					"logCount": 8,
+					"unit": "lux"
+				},
+				"temperature": {
+					"uuid": "34cf7a5b-7c97-4c9f-a3fc-08f2a8ef2169",
+					"dataType": "float32",
+					"logCount": 8,
+					"unit": "°C"
+				},
+				"humidity": {
+					"uuid": "51e87953-ee28-4a30-b7e4-0496147345c7",
+					"dataType": "float32",
+					"logCount": 8,
+					"unit": "%"
+				},
+				"pressure": {
+					"uuid": "230168be-c1a1-4ee9-bf96-25e186a1e558",
+					"dataType": "float32",
+					"logCount": 8,
+					"unit": "hPa"
+				},
+				"visibleLight": {
+					"uuid": "c856f9ee-7ea9-4398-941d-e0ba4d3095f3",
+					"dataType": "uint16",
+					"logCount": 8,
+					"unit": "lux"
+				},
+				"infraredLight": {
+					"uuid": "ba9556e9-e57b-46f2-ac82-704fc2ae02d3",
+					"dataType": "uint16",
+					"logCount": 8,
+					"unit": "lux"
+				},
+				"uvIndex": {
+					"uuid": "3a8df018-6760-4f76-82a2-2fb9ce61d024",
+					"dataType": "uint8",
+					"logCount": 8,
+					"unit": ""
+				}
+			}
+		},
+		"systemService": {
+			"uuid": "f06b0e4b-e06a-46c4-95b3-8805310c3ef7",
+			"characteristics": {
+				"mode": {
+					"uuid": "3e6f151d-af95-4d5c-a71b-659ae8d2e957"
+				},
+				"response": {
+					"uuid": "451a07c4-6782-4bc8-9a80-ab19b5c0f4a6"
+				}
+			}
+		},
+		"sensorService": {
+			"uuid": "73e03f6f-3209-4b87-b11a-f9d5e3285b6c",
+			"characteristics": {
+				"interval": {
+					"uuid": "eefaea87-7142-4a79-936c-588b5dfaf9db"
+				},
+				"response": {
+					"uuid": "c8e5509a-89f3-4692-a64f-953f84345d79"
+				}
+			}
+		},
+		"bleService": {
+			"uuid": "a06a0cfd-3dfb-455f-86f0-338ce2170e18",
+			"characteristics": {
+				"mode": {
+					"uuid": "864db612-ed60-4c4a-9564-8bb73dc7b4df"
+				},
+				"advInterval": {
+					"uuid": "e39c2836-ded8-4f57-81a6-465ea943c100"
+				},
+				"channel": {
+					"uuid": "83e8dcc2-bb01-40d4-8912-7bbae388704f"
+				},
+				"txPower": {
+					"uuid": "312e721c-c7af-45c1-992b-d8d5aadb52d4"
+				},
+				"uuid": {
+					"uuid": "076f29bc-6f8d-43e7-851b-4ae0167bc5a3"
+				},
+				"major": {
+					"uuid": "fd41545f-83cc-4ac4-a9b3-5e9afcc677fd"
+				},
+				"measuredPower": {
+					"uuid": "bd83ef9b-11da-4c06-80ba-b250b39c9031"
+				},
+				"response": {
+					"uuid": "6124b450-ce0c-4858-974a-bfb10f78c361"
+				}
+			}
+		},
+		"expressionService": {
+			"uuid": "2c6c167e-b133-4436-8cf2-408e48ccfcf3",
+			"characteristics": {
+				"targetTask": {
+					"uuid": "208a759b-7309-4dcc-916a-de4cbf7f84a2"
+				},
+				"taskSlot": {
+					"uuid": "97c1cb6e-43d6-48fd-b5b2-bfde4c7d8965"
+				},
+				"expression": {
+					"uuid": "921bbb0f-6822-4bd6-bc0a-0eb8c1223cf6"
+				},
+				"copy": {
+					"uuid": "eefcd799-74dc-4591-996f-0cf1efaf6586"
+				},
+				"move": {
+					"uuid": "16861362-3a96-40c8-85f3-9c1517f3e8c5"
+				},
+				"delete": {
+					"uuid": "bc71cc0a-b7e5-4ba0-ae6b-910a37b7d70b"
+				},
+				"response": {
+					"uuid": "2ffcf29d-8ec1-4610-8d52-c402b98daa64"
+				}
+			}
+		}
+	}
+}
